@@ -1,101 +1,204 @@
 # pi-config
 
-[![video](assets/thumbnail.png)](https://www.youtube.com/@EeroAlvar)
+Personal configuration for [Pi](https://github.com/earendil-works/pi), used directly as `~/.pi/agent`.
 
-My personal [pi](https://github.com/earendil-works/pi) configuration.
+It started from [amosblomqvist/pi-config](https://github.com/amosblomqvist/pi-config) and the workflow described in “My Pi Setup After 6 Months”, then diverged into a machine-specific setup with OpenAI Codex models, Exa search, tmux subagents, Orca integration, observational memory, and offline dictation.
 
-The setup from [My Pi Setup After 6 Months](https://www.youtube.com/@EeroAlvar) (and its predecessor, [Pi Coding Agent Setup After 2 Months](https://www.youtube.com/watch?v=DWWrLlM3gwQ)).
+> This repository contains executable Pi extensions with full user-level access. Review changes before installing it on another machine. Never commit API keys or other secrets.
 
-This is **not** meant to be installed as one big package. Browse the repo and copy the pieces you want into your own Pi config.
+## Current runtime
 
-Some extensions are big enough to live in their own repositories:
+| Component | Configuration |
+|---|---|
+| Pi | `0.84.4` at the time of this update |
+| Default model | `openai-codex/gpt-5.6-sol`, thinking `medium` |
+| Search | Exa Search API via `EXA_API_KEY` |
+| URL fetch | direct HTTP, Readability/Turndown, PDF support, Jina fallback |
+| Subagents | interactive tmux package with local `scout`, `researcher`, and `worker` profiles |
+| Memory | observational memory package, opt-in per session |
+| Dictation | local Sherpa ONNX + Orca Parakeet TDT v3; no cloud speech API |
+| Orca | pane status, prefill, and titlebar activity extensions |
 
-- **[pi-interactive-subagents](https://github.com/amosblomqvist/pi-interactive-subagents)** — async, interactive subagents in multiplexer panes
-- **[pi-observational-memory](https://github.com/amosblomqvist/pi-observational-memory)** — tiered session memory with deterministic compaction
-- **[pi-dictate](https://github.com/amosblomqvist/pi-dictate)** — real-time voice dictation inside pi
-- **[learn](https://github.com/amosblomqvist/learn)** — my AI learning system, built on top of this config
+## Installed packages
 
-This repo contains everything else.
+`settings.json` loads:
 
-## Copy an extension
+- `pi-interactive-subagents` pinned to commit `c3e8b53c0754ae5ccc19fdab5a7481ec039bc2f7`;
+- `pi-observational-memory` pinned to commit `78a1efcfdd46332253fb289724f05b26dfc7769e`;
+- local package `./packages/pi-local-dictate`.
 
-Single-file extension:
-
-```bash
-cp extensions/ask-user-question.ts ~/.pi/agent/extensions/
-```
-
-Directory extension:
-
-```bash
-cp -r extensions/browser ~/.pi/agent/extensions/
-```
-
-If the copied extension has a `package.json`, install its deps:
+Pi reconciles the pinned git packages. Restore the local dictation dependencies separately:
 
 ```bash
-cd ~/.pi/agent/extensions/browser
-npm install
+cd ~/.pi/agent
+npm ci --prefix packages/pi-local-dictate
 ```
 
-Then restart pi or run `/reload`.
-
-## Copy a skill
+Check the resulting package inventory:
 
 ```bash
-cp -r skills/pdf-reader ~/.pi/agent/skills/
+pi list
 ```
 
-Then restart pi or run `/reload`.
+## Daily startup with tmux
 
-## Do not clone over your config
+Interactive subagents need Pi to start inside tmux. The machine’s zsh configuration provides `pit`, which creates one tmux session per working directory and reconnects to it on subsequent calls:
 
-Avoid cloning this repo directly into `~/.pi/agent` unless it is a fresh setup. If you already use pi, copy individual files/folders instead so you don't replace your own config.
+```bash
+cd /path/to/project
+pit
+```
 
-## Contents
+The `pit` helper lives in the external chezmoi-managed shell configuration, not in this repository.
 
-### Extensions
+Useful tmux controls:
 
-- `ask-user-question.ts` — the agent asks you a question through a UI popup; popups from different extensions serialize via a shared UI lock
-- `bash-guard/` — hooks that catch dangerous bash commands before they run, with an on/off toggle
-- `browser/` — Playwright-driven headless Chromium the agent can drive (navigate, eval JS, inspect network/console, click, screenshot); off by default, enable with `/browser on`
-- `custom-header.ts` — the big capital Π header
-- `interactive-subagents/` — stub, see [pi-interactive-subagents](https://github.com/amosblomqvist/pi-interactive-subagents)
-- `observational-memory/` — stub, see [pi-observational-memory](https://github.com/amosblomqvist/pi-observational-memory)
-- `prompt-snippets/` — small, reusable behavior rules toggled onto a message before sending; reset after send
-- `web-fetch/` — fetch a URL and get clean markdown
-- `web-search/` — web search
+| Keys | Action |
+|---|---|
+| `Ctrl+B`, arrow | move between panes |
+| `Ctrl+B`, `z` | zoom/unzoom the current pane |
+| `Ctrl+B`, `d` | detach without stopping Pi |
 
-### Skills
+After restarting the terminal, run `pit` from the same directory to reattach. If Pi was closed with `/quit`, use `pit -c` to continue the most recent saved Pi session, or select one with `/resume`.
 
-- `analyze-sessions/` — Python scripts to query past pi sessions: cost rollups, prompt-pattern mining, session rendering
-- `pdf-reader/` — read PDFs (lecture notes, papers) into the context
-- `web-debug/` — a playbook for debugging frontend issues with the browser extension's tools
-- `youtube-transcript/` — fetch a YouTube video's title and transcript as JSON
+## Search and fetch
 
-### Deprecated
+### `web_search`
 
-`deprecated/` holds the extensions and skills from the two-month setup that are no longer in active use. They still work; they just didn't earn their place. Kept for reference.
+`extensions/web-search/index.ts` uses `POST https://api.exa.ai/search` and preserves the structured tool contract:
+
+- `query`;
+- `exactPhrases`;
+- `excludeTerms`;
+- `site` (sent through Exa `includeDomains`);
+- `count`.
+
+Configure the API key only through the environment:
+
+```bash
+export EXA_API_KEY='...'
+```
+
+Do not create a tracked credentials file. See [`extensions/web-search/README.md`](extensions/web-search/README.md).
+
+### `web_fetch`
+
+`extensions/web-fetch/` remains independent of Exa. It reads exact URLs and handles HTML, readable markdown conversion, plain text, and PDFs, with Jina Reader as a fallback for difficult pages.
+
+## Interactive subagents
+
+The package opens child Pi sessions in tmux panes and exposes asynchronous `subagent` and `subagent_message` tools. Global profiles in `agents/` override the package defaults:
+
+| Agent | Model | Role |
+|---|---|---|
+| `scout` | `openai-codex/gpt-5.6-luna`, medium | narrow read-only codebase reconnaissance |
+| `researcher` | `openai-codex/gpt-5.6-luna`, medium | sourced web research |
+| `worker` | `openai-codex/gpt-5.6-terra`, medium | implementation and verification |
+
+The worker may delegate only to `scout` and `researcher`. See [`extensions/interactive-subagents/README.md`](extensions/interactive-subagents/README.md).
+
+## Observational memory
+
+The package is installed but disabled by default. Enable it only for sessions long enough to justify extra observer/consolidator calls:
+
+```text
+/om on
+/om:status
+/om:compact
+/om:consolidate
+/om off
+```
+
+Per-session state is written under `.memory/<sessionId>/` in the active project. See [`extensions/observational-memory/README.md`](extensions/observational-memory/README.md).
+
+## Offline dictation
+
+`packages/pi-local-dictate/` replaces the Deepgram-based package in this setup.
+
+- `Alt+M` starts/stops recording in Pi;
+- `Alt+N` cancels;
+- audio is captured with SoX `rec` at 16 kHz mono;
+- transcription runs in a child process using `sherpa-onnx-node@1.12.37`;
+- the model is reused from Orca rather than duplicated:
+
+  ```text
+  ~/Library/Application Support/orca/speech-models/parakeet-tdt-0.6b-v3-int8
+  ```
+
+The external Kitty configuration maps `⌘E` to `Alt+M`, so `⌘E` controls dictation both in Orca and standalone Pi. It also maps `⌘Enter` to `Ctrl+J` for a reliable newline through tmux. Those Kitty mappings are machine configuration and are not tracked here.
+
+See [`packages/pi-local-dictate/README.md`](packages/pi-local-dictate/README.md).
+
+## Local extensions
+
+| Path | Purpose |
+|---|---|
+| `extensions/ask-user-question.ts` | single-question TUI prompt |
+| `extensions/bash-guard/` | guard dangerous shell commands |
+| `extensions/browser/` | Playwright browser debugging tools |
+| `extensions/custom-header.ts` | compact Pi startup header |
+| `extensions/orca-agent-status.ts` | report agent lifecycle to Orca |
+| `extensions/orca-prefill.ts` | inject Orca prefill text into the editor |
+| `extensions/orca-titlebar-spinner.ts` | keep the Orca pane title active through agent/compaction lifecycle |
+| `extensions/prompt-snippets/` | per-message reusable instruction snippets |
+| `extensions/web-fetch/` | read exact URLs |
+| `extensions/web-search/` | Exa-backed search |
+
+`extensions/interactive-subagents/` and `extensions/observational-memory/` contain documentation pointers; the executable implementations are installed as pinned git packages.
+
+## Skills
+
+| Skill | Purpose |
+|---|---|
+| `analyze-sessions` | session cost, prompt, and transcript analysis |
+| `pdf-reader` | PDF extraction and analysis |
+| `web-debug` | browser-driven frontend debugging workflow |
+| `youtube-transcript` | YouTube title and transcript extraction |
+
+Additional shared Orca skills are discovered from `~/.agents/skills/` and are intentionally outside this repository.
 
 ## Dependencies
 
-Extension-local npm deps are kept with the extension. Run `npm install` only in copied extensions that include a `package.json`:
-
-- `bash-guard/`
-- `browser/` (also run `npx playwright install chromium` once)
-- `web-fetch/`
-
-Optional system tools:
+Install extension-local dependencies only where a `package.json` exists:
 
 ```bash
-brew install yt-dlp ffmpeg
+npm ci --prefix extensions/bash-guard
+npm ci --prefix extensions/browser
+npm ci --prefix extensions/web-fetch
+npm ci --prefix packages/pi-local-dictate
+npx --prefix extensions/browser playwright install chromium
 ```
 
-Used by `youtube-transcript/`. Python 3 is needed for `youtube-transcript/` and `analyze-sessions/` (stdlib only).
+System dependencies used by this setup:
 
-PDF reader setup after copying `skills/pdf-reader/`:
+```bash
+brew install tmux sox yt-dlp ffmpeg
+```
+
+The PDF reader uses its own Python virtual environment:
 
 ```bash
 python3 -m venv ~/.pi/agent/skills/pdf-reader/.venv
-~/.pi/agent/skills/pdf-reader/.venv/bin/pip install -r ~/.pi/agent/skills/pdf-reader/requirements.txt
+~/.pi/agent/skills/pdf-reader/.venv/bin/pip install \
+  -r ~/.pi/agent/skills/pdf-reader/requirements.txt
 ```
+
+## Verification
+
+```bash
+cd ~/.pi/agent
+git diff --check
+pi list
+npm --prefix packages/pi-local-dictate run check
+npm --prefix packages/pi-local-dictate audit --omit=dev
+```
+
+After changing extensions or package settings, restart Pi or run `/reload`.
+
+## Runtime and secrets
+
+Ignored runtime state includes `sessions/`, package clones under `git/`, npm dependencies, virtual environments, logs, and caches. API keys must stay in environment/secret management and must not be committed.
+
+## Deprecated material
+
+`deprecated/` preserves extensions and skills from the earlier setup for reference. They are not part of the active runtime.
