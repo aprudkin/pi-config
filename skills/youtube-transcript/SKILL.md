@@ -5,7 +5,7 @@ description: Fetch the transcript and title of a YouTube video as JSON. Use when
 
 # YouTube Transcript
 
-Fetches a YouTube video's title and full transcript by pulling captions via `yt-dlp`. Prefers manual English subtitles, falls back to auto-generated English.
+Fetches a YouTube video's title and full transcript by pulling captions via `yt-dlp`. Prefers manual Russian subtitles when present, then falls back to the previous English behavior (manual English, then auto-generated English).
 
 ## Requirements
 
@@ -29,10 +29,11 @@ Prints a JSON object to stdout:
 }
 ```
 
-Progress/info logs go to stderr. On failure (no English captions, network error, bad URL), the script exits non-zero with a message on stderr.
+Progress/info logs go to stderr. On failure (no Russian or English captions, network error, bad URL), the script exits non-zero with a message on stderr.
 
 ## Notes
 
-- Only English captions are attempted (`en`, `en-US`, `en-GB`, then any `en*`). Manual captions are preferred over auto-generated.
+- Manual Russian captions are attempted first (`ru`, `ru-RU`, then any `ru*`).
+- If no manual Russian captions exist, English captions are attempted (`en`, `en-US`, `en-GB`, then any `en*`), manual before auto-generated.
 - Transcript is plain text with timing/formatting stripped — not timestamped.
-- For non-English videos or videos with captions disabled, the script will fail; consider `video_extract` with a Gemini prompt as a fallback.
+- For videos without Russian/English captions or with captions disabled, the script will fail; consider `video_extract` with a Gemini prompt as a fallback.

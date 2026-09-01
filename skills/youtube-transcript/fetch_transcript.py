@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Fetch a YouTube video's title and transcript via yt-dlp.
 
-Prefers manual English captions, falls back to auto-generated. Uses yt-dlp
-itself to download the caption file so we don't have to deal with SSL/cert
-issues from a bare urllib request.
+Prefers manual Russian captions when present, then falls back to the previous
+English behavior: manual English captions, then auto-generated English. Uses
+yt-dlp itself to download the caption file so we don't have to deal with
+SSL/cert issues from a bare urllib request.
 """
 import sys
 import os
@@ -33,29 +34,39 @@ def get_metadata(url):
         sys.exit(1)
 
 
-def pick_english_lang(info):
-    """Return (lang_code, is_auto) for the best English caption track, or None."""
+def pick_lang(info):
+    """Return (lang_code, is_auto) for the best caption track, or None.
+
+    Preference order:
+    1. manual Russian (ru, ru-RU)
+    2. any manual ru*
+    3. previous English behavior: manual en/en-US/en-GB, any manual en*,
+       auto en/en-US/en-GB, any auto en*
+    """
     subs = info.get("subtitles") or {}
     auto = info.get("automatic_captions") or {}
 
-    preferred = ["en", "en-US", "en-GB"]
+    def pick_from(tracks, preferred, prefix):
+        for lang in preferred:
+            if lang in tracks:
+                return lang
+        for lang in tracks:
+            if lang.startswith(prefix):
+                return lang
+        return None
 
-    # 1. Manual, preferred order
-    for lang in preferred:
-        if lang in subs:
-            return lang, False
-    # 2. Any manual en*
-    for lang in subs:
-        if lang.startswith("en"):
-            return lang, False
-    # 3. Auto, preferred order
-    for lang in preferred:
-        if lang in auto:
-            return lang, True
-    # 4. Any auto en*
-    for lang in auto:
-        if lang.startswith("en"):
-            return lang, True
+    russian_preferred = ["ru", "ru-RU"]
+    english_preferred = ["en", "en-US", "en-GB"]
+
+    lang = pick_from(subs, russian_preferred, "ru")
+    if lang:
+        return lang, False
+    lang = pick_from(subs, english_preferred, "en")
+    if lang:
+        return lang, False
+    lang = pick_from(auto, english_preferred, "en")
+    if lang:
+        return lang, True
     return None
 
 
@@ -108,9 +119,9 @@ def main():
     info = get_metadata(url)
     title = info.get("title", "Unknown_Title")
 
-    pick = pick_english_lang(info)
+    pick = pick_lang(info)
     if pick is None:
-        print(f"No English subtitles found for video: {title}", file=sys.stderr)
+        print(f"No Russian or English subtitles found for video: {title}", file=sys.stderr)
         sys.exit(1)
     lang, is_auto = pick
 
