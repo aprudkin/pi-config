@@ -1,6 +1,9 @@
 # Pi local dictate
 
-Offline voice dictation for Pi using Sherpa ONNX and Orca’s installed Parakeet TDT v3 model. No Deepgram account or speech API key is required, and recorded audio is not sent over the network.
+Voice dictation for Pi with two transcription backends:
+
+1. **Primary:** Groq API with multilingual `whisper-large-v3`, forced Russian language.
+2. **Fallback:** local Sherpa ONNX with Orca’s installed Parakeet TDT v3 model.
 
 The focus-aware shortcut and transcript-delivery behavior is adapted from [`amosblomqvist/pi-dictate`](https://github.com/amosblomqvist/pi-dictate) (MIT).
 
@@ -8,39 +11,53 @@ The focus-aware shortcut and transcript-delivery behavior is adapted from [`amos
 
 - macOS on Apple Silicon;
 - SoX (`brew install sox`), which provides `rec`;
-- Orca’s Parakeet model at:
+- microphone permission for the terminal application;
+- `GROQ_API_KEY` in the Pi process environment for the primary backend.
 
-  ```text
-  ~/Library/Application Support/orca/speech-models/parakeet-tdt-0.6b-v3-int8
-  ```
+The fallback model is read from:
 
-- microphone permission for the terminal application.
+```text
+~/Library/Application Support/orca/speech-models/parakeet-tdt-0.6b-v3-int8
+```
 
-Override the model location when needed:
+Override its location when needed:
 
 ```bash
 export PI_DICTATE_MODEL_DIR='/path/to/parakeet-tdt-0.6b-v3-int8'
 ```
 
-The directory must contain:
+The directory must contain `encoder.int8.onnx`, `decoder.int8.onnx`, `joiner.int8.onnx`, and `tokens.txt`.
 
-```text
-encoder.int8.onnx
-decoder.int8.onnx
-joiner.int8.onnx
-tokens.txt
+## Groq configuration
+
+Store the key in local secret management, never in this repository:
+
+```bash
+export GROQ_API_KEY='...'
 ```
+
+Optional overrides:
+
+```bash
+export GROQ_STT_MODEL='whisper-large-v3'
+export GROQ_STT_LANGUAGE='ru'
+export GROQ_STT_PROMPT='Краткий vocabulary/style prompt для текущей диктовки.'
+```
+
+`groq-transcribe.cjs` uploads a temporary 16 kHz mono WAV to the OpenAI-compatible Groq transcription endpoint. The authorization header and key are never included in normal output or bounded API errors. Audio leaves the machine when Groq is active.
+
+If the Groq request fails and the local model is available, the extension shows a warning and retries the same recording locally. If `GROQ_API_KEY` is absent, it uses local Parakeet directly.
 
 ## Installation
 
-The root `settings.json` loads this directory as `./packages/pi-local-dictate`. Install its pinned dependencies:
+The root `settings.json` loads this directory as `./packages/pi-local-dictate`. Install its pinned local-fallback dependencies:
 
 ```bash
 cd ~/.pi/agent
 npm ci --prefix packages/pi-local-dictate
 ```
 
-The package pins `sherpa-onnx-node` and the Darwin ARM64 native runtime to `1.12.37`.
+The package pins `sherpa-onnx-node` and the Darwin ARM64 native runtime to `1.12.37`. Groq uses Node’s built-in `fetch`, `FormData`, and `Blob`; no Groq SDK dependency is required.
 
 ## Usage
 
@@ -49,7 +66,7 @@ The package pins `sherpa-onnx-node` and the Darwin ARM64 native runtime to `1.12
 | `Alt+M` | start recording; press again to stop and transcribe |
 | `Alt+N` | cancel and discard the current recording |
 
-While recording, the Pi status line shows a level meter. On stop, transcription runs in a child process so loading/decoding the model does not block the TUI. The resulting text is delivered to the currently focused editor-like component. If no suitable input is focused, the transcript is copied to the macOS clipboard.
+While recording, the Pi status line shows a level meter. On stop, transcription runs in a child process and the resulting text is delivered to the currently focused editor-like component. If no suitable input is focused, the transcript is copied to the macOS clipboard.
 
 On this machine, Kitty maps `⌘E` to the `Alt+M` escape sequence, giving the same visible shortcut as Orca’s built-in dictation. That mapping is stored in `~/.config/kitty/kitty.conf`, outside this repository.
 
@@ -57,11 +74,11 @@ On this machine, Kitty maps `⌘E` to the `Alt+M` escape sequence, giving the sa
 
 1. `index.ts` records raw signed 16-bit, 16 kHz, mono PCM with `rec`.
 2. The buffered audio is written to a temporary directory.
-3. `transcribe.cjs` is launched with the current Node executable.
-4. Sherpa ONNX loads the Parakeet transducer files and returns JSON text.
-5. Temporary audio is removed after the child exits.
+3. With `GROQ_API_KEY`, `groq-transcribe.cjs` wraps PCM as WAV and calls Groq Whisper Large v3 with `language=ru`.
+4. On a Groq error—or with no key—`transcribe.cjs` loads local Parakeet through Sherpa ONNX.
+5. The text is inserted into the current focus target and temporary audio is removed.
 
-The temporary recording is also removed on successful or failed transcription. Cancelling kills active recorder/transcriber processes and discards buffered audio.
+Cancelling kills active recorder/transcriber processes and discards buffered audio.
 
 ## Verification
 
@@ -70,11 +87,13 @@ npm --prefix ~/.pi/agent/packages/pi-local-dictate run check
 npm --prefix ~/.pi/agent/packages/pi-local-dictate audit --omit=dev
 ```
 
-The speech worker was verified end-to-end with generated audio and the real model. The interactive path was then verified in Kitty + tmux with Russian speech.
+The local worker and Groq worker have both been exercised end-to-end with generated Russian audio. Final quality should also be tested with the user’s real microphone and vocabulary.
 
 ## Limitations
 
 - Uses the system-default microphone; there is no Pi UI for device selection.
-- Depends on Orca’s model directory unless `PI_DICTATE_MODEL_DIR` is set.
-- Current native dependency is macOS ARM64-specific.
+- Groq sends audio to a cloud service and requires network access.
+- Groq bills a minimum of 10 seconds per transcription request.
+- The fallback depends on Orca’s model directory unless `PI_DICTATE_MODEL_DIR` is set.
+- Current fallback native dependency is macOS ARM64-specific.
 - Recognition is finalized after stopping; partial text is not streamed into the editor.

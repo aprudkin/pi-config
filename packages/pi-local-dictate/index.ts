@@ -1,10 +1,10 @@
 /**
- * Offline voice dictation for Pi.
+ * Voice dictation for Pi.
  *
- * Alt+M starts/stops recording; Alt+N cancels. Audio never leaves the machine:
- * a child process transcribes 16 kHz PCM with sherpa-onnx and Orca's installed
- * Parakeet TDT v3 model. Focus-aware text delivery is adapted from
- * amosblomqvist/pi-dictate (MIT).
+ * Alt+M starts/stops recording; Alt+N cancels. Groq Whisper Large v3 is the
+ * primary backend when GROQ_API_KEY is set. Orca's local Parakeet TDT v3 model
+ * is used when no key is present or as a fallback after a Groq failure.
+ * Focus-aware text delivery is adapted from amosblomqvist/pi-dictate (MIT).
  */
 
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
@@ -18,7 +18,8 @@ import { fileURLToPath } from "node:url";
 
 const MODEL_DIR = process.env.PI_DICTATE_MODEL_DIR ??
   join(homedir(), "Library", "Application Support", "orca", "speech-models", "parakeet-tdt-0.6b-v3-int8");
-const TRANSCRIBE_SCRIPT = fileURLToPath(new URL("./transcribe.cjs", import.meta.url));
+const LOCAL_TRANSCRIBE_SCRIPT = fileURLToPath(new URL("./transcribe.cjs", import.meta.url));
+const GROQ_TRANSCRIBE_SCRIPT = fileURLToPath(new URL("./groq-transcribe.cjs", import.meta.url));
 const MODEL_FILES = ["encoder.int8.onnx", "decoder.int8.onnx", "joiner.int8.onnx", "tokens.txt"];
 const SPINNER = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 const BLOCKS = ["▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"];
@@ -127,7 +128,7 @@ export default function localDictate(pi: ExtensionAPI) {
     currentLevel = 0;
     const render = () => {
       const dot = activeCtx?.ui.theme.fg("error", "●") ?? "●";
-      setStatus(`${dot} ${meter.map(meterBlock).join("")} listening locally…`);
+      setStatus(`${dot} ${meter.map(meterBlock).join("")} listening…`);
     };
     render();
     meterTimer = setInterval(() => {
@@ -137,12 +138,12 @@ export default function localDictate(pi: ExtensionAPI) {
     }, 70);
   };
 
-  const startSpinner = () => {
+  const startSpinner = (label = "transcribing…") => {
     let frame = 0;
-    setStatus(`${SPINNER[0]} transcribing locally…`);
+    setStatus(`${SPINNER[0]} ${label}`);
     spinnerTimer = setInterval(() => {
       frame = (frame + 1) % SPINNER.length;
-      setStatus(`${SPINNER[frame]} transcribing locally…`);
+      setStatus(`${SPINNER[frame]} ${label}`);
     }, 80);
   };
 
@@ -164,49 +165,86 @@ export default function localDictate(pi: ExtensionAPI) {
     const rawPath = join(workDir, "audio.raw");
     writeFileSync(rawPath, audio);
     const myGeneration = generation;
-    let stdout = "";
-    let stderr = "";
+    const localAvailable = MODEL_FILES.every((name) => existsSync(join(MODEL_DIR, name)));
 
-    try {
-      const child = spawn(process.execPath, [TRANSCRIBE_SCRIPT, rawPath, MODEL_DIR], {
-        stdio: ["ignore", "pipe", "pipe"],
-      });
-      transcriber = child;
-    } catch (error: any) {
-      activeCtx.ui.notify(`Failed to start offline transcription: ${error.message}`, "error");
+    const removeAudio = () => {
       try { unlinkSync(rawPath); rmdirSync(workDir); } catch {}
-      reset();
-      return;
-    }
+    };
 
-    const child = transcriber;
-    child.stdout.setEncoding("utf8");
-    child.stderr.setEncoding("utf8");
-    child.stdout.on("data", (data: string) => { stdout += data; });
-    child.stderr.on("data", (data: string) => { stderr += data; });
-    child.on("close", (code) => {
-      try { unlinkSync(rawPath); rmdirSync(workDir); } catch {}
-      if (myGeneration !== generation || !activeCtx) return;
-      if (code !== 0) {
-        activeCtx.ui.notify(`Offline transcription failed: ${stderr.trim() || `exit ${code}`}`, "error");
+    const runTranscriber = (script: string, args: string[], provider: "groq" | "local") => {
+      let stdout = "";
+      let stderr = "";
+      let child: ChildProcessByStdio<null, Readable, Readable>;
+      try {
+        child = spawn(process.execPath, [script, ...args], {
+          stdio: ["ignore", "pipe", "pipe"],
+        });
+        transcriber = child;
+      } catch (error: any) {
+        removeAudio();
+        activeCtx?.ui.notify(`Failed to start ${provider} transcription: ${error.message}`, "error");
         reset();
         return;
       }
-      try {
-        const text = String(JSON.parse(stdout).text ?? "").replace(/\s+/g, " ").trim();
-        if (text) deliver(text);
-        else activeCtx.ui.notify("No speech recognized", "warning");
-      } catch (error: any) {
-        activeCtx.ui.notify(`Invalid offline transcription result: ${error.message}`, "error");
-      }
+
+      child.stdout.setEncoding("utf8");
+      child.stderr.setEncoding("utf8");
+      child.stdout.on("data", (data: string) => { stdout += data; });
+      child.stderr.on("data", (data: string) => { stderr += data; });
+      child.on("close", (code) => {
+        transcriber = null;
+        if (myGeneration !== generation || !activeCtx) {
+          removeAudio();
+          return;
+        }
+        if (code !== 0 && provider === "groq" && localAvailable) {
+          activeCtx.ui.notify("Groq transcription failed; using local Parakeet fallback", "warning");
+          if (spinnerTimer) clearInterval(spinnerTimer);
+          spinnerTimer = null;
+          startSpinner("Groq unavailable; transcribing locally…");
+          runTranscriber(LOCAL_TRANSCRIBE_SCRIPT, [rawPath, MODEL_DIR], "local");
+          return;
+        }
+        if (code !== 0) {
+          removeAudio();
+          activeCtx.ui.notify(
+            `${provider === "groq" ? "Groq" : "Local"} transcription failed: ${stderr.trim() || `exit ${code}`}`,
+            "error",
+          );
+          reset();
+          return;
+        }
+        try {
+          const result = JSON.parse(stdout) as { text?: string };
+          const text = String(result.text ?? "").replace(/\s+/g, " ").trim();
+          if (text) deliver(text);
+          else activeCtx.ui.notify("No speech recognized", "warning");
+        } catch (error: any) {
+          activeCtx.ui.notify(`Invalid ${provider} transcription result: ${error.message}`, "error");
+        }
+        removeAudio();
+        reset();
+      });
+    };
+
+    if (process.env.GROQ_API_KEY) {
+      runTranscriber(GROQ_TRANSCRIBE_SCRIPT, [rawPath], "groq");
+    } else if (localAvailable) {
+      runTranscriber(LOCAL_TRANSCRIBE_SCRIPT, [rawPath, MODEL_DIR], "local");
+    } else {
+      removeAudio();
+      activeCtx.ui.notify("GROQ_API_KEY is unset and the local speech model is unavailable", "error");
       reset();
-    });
+    }
   };
 
   const start = (ctx: ExtensionContext) => {
     const missing = MODEL_FILES.find((name) => !existsSync(join(MODEL_DIR, name)));
-    if (missing) {
-      ctx.ui.notify(`Offline speech model is missing: ${join(MODEL_DIR, missing)}`, "error");
+    if (missing && !process.env.GROQ_API_KEY) {
+      ctx.ui.notify(
+        `GROQ_API_KEY is unset and the offline speech model is missing: ${join(MODEL_DIR, missing)}`,
+        "error",
+      );
       return;
     }
     activeCtx = ctx;
@@ -255,7 +293,7 @@ export default function localDictate(pi: ExtensionAPI) {
     state = "transcribing";
     if (meterTimer) clearInterval(meterTimer);
     meterTimer = null;
-    startSpinner();
+    startSpinner(process.env.GROQ_API_KEY ? "transcribing with Groq Whisper…" : "transcribing locally…");
     try { recorder?.kill("SIGTERM"); } catch {}
     stopTimer = setTimeout(transcribe, 1500);
   };
@@ -303,11 +341,11 @@ export default function localDictate(pi: ExtensionAPI) {
   });
 
   pi.registerShortcut(Key.alt("m"), {
-    description: "Toggle offline voice dictation (Parakeet TDT v3)",
+    description: "Toggle voice dictation (Groq Whisper with local fallback)",
     handler: async (ctx) => toggle(ctx),
   });
   pi.registerShortcut(Key.alt("n"), {
-    description: "Cancel offline voice dictation",
+    description: "Cancel voice dictation",
     handler: async () => cancel(),
   });
 

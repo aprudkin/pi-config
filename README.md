@@ -2,7 +2,7 @@
 
 Personal configuration for [Pi](https://github.com/earendil-works/pi), used directly as `~/.pi/agent`.
 
-It started from [amosblomqvist/pi-config](https://github.com/amosblomqvist/pi-config) and the workflow described in “My Pi Setup After 6 Months”, then diverged into a machine-specific setup with OpenAI Codex models, Exa search, tmux subagents, Orca integration, observational memory, and offline dictation.
+It started from [amosblomqvist/pi-config](https://github.com/amosblomqvist/pi-config) and the workflow described in “My Pi Setup After 6 Months”, then diverged into a machine-specific setup with OpenAI Codex models, Exa search, tmux subagents, Orca integration, observational memory, and Russian voice dictation.
 
 > This repository contains executable Pi extensions with full user-level access. Review changes before installing it on another machine. Never commit API keys or other secrets.
 
@@ -16,7 +16,7 @@ It started from [amosblomqvist/pi-config](https://github.com/amosblomqvist/pi-co
 | URL fetch | direct HTTP, Readability/Turndown, PDF support, Jina fallback |
 | Subagents | interactive tmux package with local `scout`, `researcher`, and `worker` profiles |
 | Memory | observational memory package, opt-in per session |
-| Dictation | local Sherpa ONNX + Orca Parakeet TDT v3; no cloud speech API |
+| Dictation | Groq Whisper Large v3 (`ru`) with local Orca Parakeet fallback |
 | Orca | pane status, prefill, and titlebar activity extensions |
 
 ## Installed packages
@@ -111,21 +111,21 @@ The package is installed but disabled by default. Enable it only for sessions lo
 
 Per-session state is written under `.memory/<sessionId>/` in the active project. See [`extensions/observational-memory/README.md`](extensions/observational-memory/README.md).
 
-## Offline dictation
+## Voice dictation
 
 `packages/pi-local-dictate/` replaces the Deepgram-based package in this setup.
 
 - `Alt+M` starts/stops recording in Pi;
 - `Alt+N` cancels;
 - audio is captured with SoX `rec` at 16 kHz mono;
-- transcription runs in a child process using `sherpa-onnx-node@1.12.37`;
-- the model is reused from Orca rather than duplicated:
+- when `GROQ_API_KEY` is present, Groq `whisper-large-v3` transcribes with `language=ru`;
+- if Groq fails or the key is absent, a child process uses `sherpa-onnx-node@1.12.37` and the local Orca Parakeet model:
 
   ```text
   ~/Library/Application Support/orca/speech-models/parakeet-tdt-0.6b-v3-int8
   ```
 
-The external Kitty configuration maps `⌘E` to `Alt+M`, so `⌘E` controls dictation both in Orca and standalone Pi. It also maps `⌘Enter` to `Ctrl+J` for a reliable newline through tmux. Those Kitty mappings are machine configuration and are not tracked here.
+Groq sends the recorded WAV to a cloud API. The key belongs only in the process environment and must never be committed. The external Kitty configuration maps `⌘E` to `Alt+M`, so `⌘E` controls dictation both in Orca and standalone Pi. It also maps `⌘Enter` to `Ctrl+J` for a reliable newline through tmux. Those Kitty mappings are machine configuration and are not tracked here.
 
 See [`packages/pi-local-dictate/README.md`](packages/pi-local-dictate/README.md).
 
