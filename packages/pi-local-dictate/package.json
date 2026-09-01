@@ -1,0 +1,27 @@
+{
+  "name": "pi-local-dictate",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Offline voice dictation for Pi using Orca's local Parakeet TDT v3 model",
+  "license": "MIT",
+  "keywords": ["pi-package"],
+  "pi": {
+    "extensions": ["./index.ts"]
+  },
+  "dependencies": {
+    "sherpa-onnx-node": "1.12.37",
+    "sherpa-onnx-darwin-arm64": "1.12.37"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-tui": "*"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.1",
+    "typescript": "5.9.3"
+  },
+  "scripts": {
+    "check": "tsc --noEmit"
+  }
+}
