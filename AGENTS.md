@@ -4,6 +4,7 @@
 
 - Follow the user's explicit instructions and inspect applicable project context before acting.
 - Prefer more specific project instructions when they differ from these defaults, unless they conflict with the user's request or a safety boundary.
+- When a task reads or modifies files in the Obsidian vault at `~/Obsidian/obsidian` from any working directory, first inspect the vault working tree and read its applicable `AGENTS.md`, `AGENTS.override.md`, or `CLAUDE.md` files. For article creation, auditing, restructuring, or editing, load `better-markdown` and follow the vault's validation and coupled-update rules.
 - Keep specialized project and system workflows in local instructions or skills rather than reproducing them here.
 
 ## Working approach
