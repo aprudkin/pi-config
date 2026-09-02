@@ -11,6 +11,7 @@ sessions/
 git/
 mcp-cache.json
 mcp-npx-cache.json
+models-store.json
 npm/
 run-history.jsonl
 session-manager-config.toml
