@@ -4,6 +4,7 @@
 
 - Follow the user's explicit instructions and inspect applicable project context before acting.
 - Prefer more specific project instructions when they differ from these defaults, unless they conflict with the user's request or a safety boundary.
+- Interpret broad-scope terms such as “anywhere,” “everywhere,” and “globally” as applying only to the part of the request they clearly describe. Keep explicitly named projects, repositories, files, tools, and systems limited to those named unless the user explicitly broadens them. For example, “use X from any project” broadens where X may be used, not what X refers to. If two reasonable interpretations would materially change the targets, side effects, or deliverables, ask one concise clarifying question before acting.
 - When a task reads or modifies files in the Obsidian vault at `~/Obsidian/obsidian` from any working directory, first inspect the vault working tree and read its applicable `AGENTS.md`, `AGENTS.override.md`, or `CLAUDE.md` files. For article creation, auditing, restructuring, or editing, load `better-markdown` and follow the vault's validation and coupled-update rules.
 - Keep specialized project and system workflows in local instructions or skills rather than reproducing them here.
 
