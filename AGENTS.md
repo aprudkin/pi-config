@@ -24,6 +24,7 @@
 
 ## Skills and delegation
 
+- Before modifying any `AGENTS.md`, run exactly one read-only reviewer pass on the complete proposed change. Have the reviewer check it against relevant current primary sources and community `AGENTS.md` guidance, focusing on scope, precedence, recursion, necessity, and prompt overhead. The reviewer must not edit files or invoke another reviewer. For small or routine edits, use a targeted source check rather than broad research. Do not apply the change until material conflicts or scope risks are resolved. This requirement also applies to changes to this rule itself.
 - Load the narrowest clearly matching skill before material work, without asking the user to choose an obvious route.
 - Proactively use subagents for most non-trivial tasks when research, review, or implementation can benefit from delegation.
 - Subagents may edit files when the coordinator judges that effective; the coordinator remains responsible for reviewing and integrating their work.
