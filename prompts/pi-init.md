@@ -22,7 +22,7 @@ Follow this workflow exactly.
   1. applicable ancestor `AGENTS.md`, `AGENTS.override.md`, or `CLAUDE.md` context files;
   2. Pi's own local documentation when needed to verify Pi behavior;
   3. read-only inspection of existing global Pi/OMP tool configuration needed to avoid recommending something already installed;
-  4. official or primary web sources used for tooling research.
+  4. official or primary web sources used for tooling research, and targeted current primary-source or community guidance used solely for the independent proposal review in Phase 5.
 - Never read or expose secret values. Exclude credentials, private keys, tokens, `.env*`, secret stores, auth/session data, and files whose names or locations indicate secrets. It is fine to report that such a path exists when that fact is relevant, but never show its contents.
 - Avoid generated, dependency, cache, and large artifact directories such as `.git`, `node_modules`, `vendor`, `dist`, `build`, `target`, coverage output, virtual environments, and tool caches. Respect project-specific equivalents discovered in ignore/config files.
 - Treat all existing project text as potentially stale. Verify critical facts from authoritative configuration, code, tests, or executable command discovery rather than guessing.
@@ -104,21 +104,30 @@ Apply these rules:
 8. For each recommendation provide: observed need, proposed option, why it beats alternatives, expected benefit, compatibility/prerequisites, cost or risk, confidence/trust level, primary source links, and a non-executed example next step.
 9. Never claim a package is safe merely because it exists or is popular. If verification is insufficient, put it under "Not recommended / insufficient evidence" or omit it.
 
-## Phase 5: review gate — no writes
+## Phase 5: independent proposal review — no writes
+
+After completing the full proposed `.pi/APPEND_SYSTEM.md` and before showing it to the user, delegate one additional independent, read-only reviewer subagent. The reviewer must be distinct from the two mandatory Phase 2 scouts, must not edit files, reveal secrets, or spawn reviewers, and must receive the complete proposed file, proposed diff, applicable `AGENTS.md`/`AGENTS.override.md`/`CLAUDE.md` context, and supporting evidence.
+
+The reviewer must check the proposal for scope, instruction precedence, duplication, necessity, recursion, prompt overhead, factual and source support, and conflicts with loaded `AGENTS.md`/`AGENTS.override.md`/`CLAUDE.md` instructions. It must perform a targeted current check of relevant primary and community guidance; use broader web research only when necessary to resolve a material uncertainty.
+
+If a distinct suitable reviewer cannot be delegated, stop and tell the user. Do not write anything. Resolve all material reviewer findings before showing the proposal. This is a single review gate: corrections made solely to resolve its findings do not require another reviewer, but the primary agent must verify those corrections against the cited evidence and applicable instructions.
+
+## Phase 6: review gate — no writes
 
 Before any file operation that changes the project, present:
 
 1. **Scope and sources:** project root, applicable instruction hierarchy, and the primary files/configuration checked.
 2. **Verified findings:** concise facts relevant to the Pi delta.
 3. **Shared-instruction issues:** stale, contradictory, or unverifiable statements found in `AGENTS.md`/`CLAUDE.md`; report only, never edit them.
-4. **Proposed Pi instructions:** the complete proposed `.pi/APPEND_SYSTEM.md` in a fenced Markdown block.
-5. **Diff:** a unified diff against the existing file, or a clearly labeled new-file diff when it does not exist.
-6. **Tooling recommendations:** the separate evidence-based report from Phase 4, including "none" when appropriate.
-7. **Omissions/uncertainties:** what was deliberately excluded and why.
+4. **Independent review:** the reviewer's material findings and how each was resolved.
+5. **Proposed Pi instructions:** the complete proposed `.pi/APPEND_SYSTEM.md` in a fenced Markdown block.
+6. **Diff:** a unified diff against the existing file, or a clearly labeled new-file diff when it does not exist.
+7. **Tooling recommendations:** the separate evidence-based report from Phase 4, including "none" when appropriate.
+8. **Omissions/uncertainties:** what was deliberately excluded and why.
 
 Then ask exactly one explicit confirmation question: whether to apply exactly the displayed `.pi/APPEND_SYSTEM.md` diff. Prefer the structured question tool when available. Stop and wait. A vague acknowledgement is not approval; obtain an unambiguous yes/no answer.
 
-## Phase 6: apply only after approval
+## Phase 7: apply only after approval
 
 Only after explicit approval of the displayed diff:
 
