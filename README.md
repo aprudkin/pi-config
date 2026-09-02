@@ -119,13 +119,14 @@ Per-session state is written under `.memory/<sessionId>/` in the active project.
 - `Alt+N` cancels;
 - audio is captured with SoX `rec` at 16 kHz mono;
 - when `GROQ_API_KEY` is present, Groq `whisper-large-v3` transcribes with `language=ru`;
-- if Groq fails or the key is absent, a child process uses `sherpa-onnx-node@1.12.37` and the local Orca Parakeet model:
+- the recognized text is conservatively normalized by Groq `qwen/qwen3.8-27b`; normalization failure falls back to the unchanged transcript, and `PI_DICTATE_NORMALIZE=0` disables this second stage;
+- if Groq transcription fails or the key is absent, a child process uses `sherpa-onnx-node@1.12.37` and the local Orca Parakeet model; with a key present, locally recognized text still goes through the normalization stage:
 
   ```text
   ~/Library/Application Support/orca/speech-models/parakeet-tdt-0.6b-v3-int8
   ```
 
-Groq sends the recorded WAV to a cloud API. The key belongs only in the process environment and must never be committed. The external Kitty configuration maps `⌘E` to `Alt+M`, so `⌘E` controls dictation both in Orca and standalone Pi. It also maps `⌘Enter` to `Ctrl+J` for a reliable newline through tmux. Those Kitty mappings are machine configuration and are not tracked here.
+Groq sends the recorded WAV to its transcription API and recognized text to its chat API. The key belongs only in the process environment and must never be committed. The external Kitty configuration maps `⌘E` to `Alt+M`, so `⌘E` controls dictation both in Orca and standalone Pi. It also maps `⌘Enter` to `Ctrl+J` for a reliable newline through tmux. Those Kitty mappings are machine configuration and are not tracked here.
 
 See [`packages/pi-local-dictate/README.md`](packages/pi-local-dictate/README.md).
 

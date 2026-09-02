@@ -9,7 +9,7 @@
 
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { Key, matchesKey, isKeyRelease, isKeyRepeat } from "@earendil-works/pi-tui";
-import { spawn, type ChildProcessByStdio } from "node:child_process";
+import { spawn, type ChildProcessByStdio, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { existsSync, mkdtempSync, writeFileSync, unlinkSync, rmdirSync } from "node:fs";
 import type { Readable } from "node:stream";
 import { homedir, tmpdir } from "node:os";
@@ -20,6 +20,7 @@ const MODEL_DIR = process.env.PI_DICTATE_MODEL_DIR ??
   join(homedir(), "Library", "Application Support", "orca", "speech-models", "parakeet-tdt-0.6b-v3-int8");
 const LOCAL_TRANSCRIBE_SCRIPT = fileURLToPath(new URL("./transcribe.cjs", import.meta.url));
 const GROQ_TRANSCRIBE_SCRIPT = fileURLToPath(new URL("./groq-transcribe.cjs", import.meta.url));
+const NORMALIZE_SCRIPT = fileURLToPath(new URL("./normalize-transcript.cjs", import.meta.url));
 const MODEL_FILES = ["encoder.int8.onnx", "decoder.int8.onnx", "joiner.int8.onnx", "tokens.txt"];
 const SPINNER = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 const BLOCKS = ["▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"];
@@ -55,6 +56,7 @@ export default function localDictate(pi: ExtensionAPI) {
   let state: State = "idle";
   let recorder: ChildProcessByStdio<null, Readable, Readable> | null = null;
   let transcriber: ChildProcessByStdio<null, Readable, Readable> | null = null;
+  let normalizer: ChildProcessWithoutNullStreams | null = null;
   let chunks: Buffer[] = [];
   let activeCtx: ExtensionContext | null = null;
   let lastCtx: ExtensionContext | null = null;
@@ -115,7 +117,9 @@ export default function localDictate(pi: ExtensionAPI) {
     clearTimers();
     try { recorder?.kill("SIGTERM"); } catch {}
     try { transcriber?.kill("SIGTERM"); } catch {}
+    try { normalizer?.kill("SIGTERM"); } catch {}
     recorder = transcriber = null;
+    normalizer = null;
     chunks = [];
     state = "idle";
     finalizing = false;
@@ -171,6 +175,64 @@ export default function localDictate(pi: ExtensionAPI) {
       try { unlinkSync(rawPath); rmdirSync(workDir); } catch {}
     };
 
+    const finishTranscript = (originalText: string) => {
+      removeAudio();
+      if (!originalText) {
+        activeCtx?.ui.notify("No speech recognized", "warning");
+        reset();
+        return;
+      }
+      if (!process.env.GROQ_API_KEY || process.env.PI_DICTATE_NORMALIZE === "0") {
+        deliver(originalText);
+        reset();
+        return;
+      }
+
+      if (spinnerTimer) clearInterval(spinnerTimer);
+      spinnerTimer = null;
+      startSpinner("normalizing transcript…");
+      let stdout = "";
+      let stderr = "";
+      let child: ChildProcessWithoutNullStreams;
+      try {
+        child = spawn(process.execPath, [NORMALIZE_SCRIPT], { stdio: ["pipe", "pipe", "pipe"] });
+        normalizer = child;
+      } catch (error: any) {
+        activeCtx?.ui.notify(`Failed to start transcript normalization: ${error.message}`, "warning");
+        deliver(originalText);
+        reset();
+        return;
+      }
+
+      child.stdout.setEncoding("utf8");
+      child.stderr.setEncoding("utf8");
+      child.stdout.on("data", (data: string) => { stdout += data; });
+      child.stderr.on("data", (data: string) => { stderr += data; });
+      child.stdin.end(originalText);
+      child.on("close", (code) => {
+        normalizer = null;
+        if (myGeneration !== generation || !activeCtx) return;
+        if (code !== 0) {
+          activeCtx.ui.notify(
+            `Transcript normalization failed; using raw transcript: ${stderr.trim() || `exit ${code}`}`,
+            "warning",
+          );
+          deliver(originalText);
+          reset();
+          return;
+        }
+        try {
+          const result = JSON.parse(stdout) as { text?: string };
+          const normalized = String(result.text ?? "").replace(/\s+/g, " ").trim();
+          deliver(normalized || originalText);
+        } catch (error: any) {
+          activeCtx.ui.notify(`Invalid normalization result; using raw transcript: ${error.message}`, "warning");
+          deliver(originalText);
+        }
+        reset();
+      });
+    };
+
     const runTranscriber = (script: string, args: string[], provider: "groq" | "local") => {
       let stdout = "";
       let stderr = "";
@@ -217,13 +279,12 @@ export default function localDictate(pi: ExtensionAPI) {
         try {
           const result = JSON.parse(stdout) as { text?: string };
           const text = String(result.text ?? "").replace(/\s+/g, " ").trim();
-          if (text) deliver(text);
-          else activeCtx.ui.notify("No speech recognized", "warning");
+          finishTranscript(text);
         } catch (error: any) {
+          removeAudio();
           activeCtx.ui.notify(`Invalid ${provider} transcription result: ${error.message}`, "error");
+          reset();
         }
-        removeAudio();
-        reset();
       });
     };
 

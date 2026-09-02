@@ -42,7 +42,16 @@ Optional overrides:
 export GROQ_STT_MODEL='whisper-large-v3'
 export GROQ_STT_LANGUAGE='ru'
 export GROQ_STT_PROMPT='Краткий vocabulary/style prompt для текущей диктовки.'
+export GROQ_NORMALIZE_MODEL='qwen/qwen3.8-27b'
 ```
+
+After recognition, `normalize-transcript.cjs` conservatively post-edits the transcript with Groq Qwen. It may fix punctuation, casing, filler words, repetitions, and obvious technical-term spellings, but is instructed not to change meaning, negations, numbers, versions, commands, paths, URLs, filenames, or identifiers. Disable this second cloud call with:
+
+```bash
+export PI_DICTATE_NORMALIZE=0
+```
+
+If normalization fails or returns invalid output, the raw recognized transcript is inserted unchanged.
 
 `groq-transcribe.cjs` uploads a temporary 16 kHz mono WAV to the OpenAI-compatible Groq transcription endpoint. The authorization header and key are never included in normal output or bounded API errors. Audio leaves the machine when Groq is active.
 
@@ -76,9 +85,10 @@ On this machine, Kitty maps `⌘E` to the `Alt+M` escape sequence, giving the sa
 2. The buffered audio is written to a temporary directory.
 3. With `GROQ_API_KEY`, `groq-transcribe.cjs` wraps PCM as WAV and calls Groq Whisper Large v3 with `language=ru`.
 4. On a Groq error—or with no key—`transcribe.cjs` loads local Parakeet through Sherpa ONNX.
-5. The text is inserted into the current focus target and temporary audio is removed.
+5. Unless `PI_DICTATE_NORMALIZE=0`, `normalize-transcript.cjs` sends the recognized text—not the audio—to Groq `qwen/qwen3.8-27b` for conservative cleanup.
+6. The normalized text, or the raw transcript if normalization fails, is inserted into the current focus target; temporary audio is removed before normalization.
 
-Cancelling kills active recorder/transcriber processes and discards buffered audio.
+Cancelling kills active recorder, transcriber, and normalizer processes and discards buffered audio.
 
 ## Verification
 
@@ -87,12 +97,12 @@ npm --prefix ~/.pi/agent/packages/pi-local-dictate run check
 npm --prefix ~/.pi/agent/packages/pi-local-dictate audit --omit=dev
 ```
 
-The local worker and Groq worker have both been exercised end-to-end with generated Russian audio. Final quality should also be tested with the user’s real microphone and vocabulary.
+The local worker and Groq transcription worker have both been exercised end-to-end with generated Russian audio. The Groq normalization worker was tested against Russian speech-like text containing Pi/tmux/Groq terminology, a version number, and a filesystem path. Final quality should also be tested with the user’s real microphone and vocabulary.
 
 ## Limitations
 
 - Uses the system-default microphone; there is no Pi UI for device selection.
-- Groq sends audio to a cloud service and requires network access.
+- Groq sends audio to its transcription API and recognized text to its chat API; both require network access.
 - Groq bills a minimum of 10 seconds per transcription request.
 - The fallback depends on Orca’s model directory unless `PI_DICTATE_MODEL_DIR` is set.
 - Current fallback native dependency is macOS ARM64-specific.
