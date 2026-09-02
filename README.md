@@ -156,7 +156,9 @@ See [`packages/pi-local-dictate/README.md`](packages/pi-local-dictate/README.md)
 | Skill | Purpose |
 |---|---|
 | `analyze-sessions` | session cost, prompt, and transcript analysis |
+| `better-markdown` | evidence-preserving Markdown and README editing |
 | `pdf-reader` | PDF extraction and analysis |
+| `sshai` | bounded non-interactive SSH execution through configured host aliases |
 | `web-debug` | browser-driven frontend debugging workflow |
 | `youtube-transcript` | YouTube title and transcript extraction |
 
@@ -179,6 +181,8 @@ System dependencies used by this setup:
 ```bash
 brew install tmux sox yt-dlp ffmpeg
 ```
+
+The `sshai` skill additionally requires the external `sshai` binary on `PATH`, system `ssh`/`scp`, and configured SSH host aliases. Verify the CLI contract with `sshai help`; it does not implement `--version`.
 
 The PDF reader uses its own Python virtual environment:
 
