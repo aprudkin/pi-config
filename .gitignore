@@ -11,6 +11,7 @@ sessions/
 git/
 mcp-cache.json
 mcp-npx-cache.json
+npm/
 run-history.jsonl
 session-manager-config.toml
 pi-crash.log
