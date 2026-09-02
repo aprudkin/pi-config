@@ -23,5 +23,6 @@
         "thinking": "medium"
       }
     }
-  }
+  },
+  "hideThinkingBlock": false
 }
