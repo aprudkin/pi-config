@@ -1,7 +1,7 @@
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
-import { DynamicBorder, isToolCallEventType } from "@mariozechner/pi-coding-agent";
-import type { SelectItem } from "@mariozechner/pi-tui";
-import { Container, SelectList, Text } from "@mariozechner/pi-tui";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { DynamicBorder, isToolCallEventType } from "@earendil-works/pi-coding-agent";
+import type { SelectItem } from "@earendil-works/pi-tui";
+import { Container, SelectList, Text } from "@earendil-works/pi-tui";
 import { parse as shellParse } from "shell-quote";
 
 type Severity = "high" | "medium";

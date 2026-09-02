@@ -8,6 +8,8 @@ auth.json
 .pi/
 .memory/
 sessions/
+/trust.json
+/extensions/browser/.profile/
 git/
 mcp-cache.json
 mcp-npx-cache.json

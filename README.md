@@ -25,7 +25,8 @@ It started from [amosblomqvist/pi-config](https://github.com/amosblomqvist/pi-co
 
 - `pi-interactive-subagents` pinned to commit `c3e8b53c0754ae5ccc19fdab5a7481ec039bc2f7`;
 - `pi-observational-memory` pinned to commit `78a1efcfdd46332253fb289724f05b26dfc7769e`;
-- local package `./packages/pi-local-dictate`.
+- local package `./packages/pi-local-dictate`;
+- npm package `pi-footer`.
 
 Pi reconciles the pinned git packages. Restore the local dictation dependencies separately:
 
@@ -202,7 +203,7 @@ npm --prefix packages/pi-local-dictate run check
 npm --prefix packages/pi-local-dictate audit --omit=dev
 ```
 
-After changing extensions or package settings, restart Pi or run `/reload`.
+After changing extension source or package settings, restart Pi or run `/reload`. A reload that reports no extension loading errors is the runtime smoke check for standalone extensions.
 
 ## Runtime and secrets
 

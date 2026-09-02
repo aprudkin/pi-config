@@ -8,9 +8,9 @@
  * To restore the built-in header: rename/delete this file and /reload.
  */
 
-import type { ExtensionAPI, Theme } from "@mariozechner/pi-coding-agent";
-import { VERSION, keyHint, rawKeyHint } from "@mariozechner/pi-coding-agent";
-import { Text } from "@mariozechner/pi-tui";
+import type { ExtensionAPI, Theme } from "@earendil-works/pi-coding-agent";
+import { VERSION, keyHint, rawKeyHint } from "@earendil-works/pi-coding-agent";
+import { Text } from "@earendil-works/pi-tui";
 
 /**
  * Build the header text. This is what you customize.

@@ -132,8 +132,9 @@ Before any file operation that changes the project, present:
 8. **Diff:** a unified diff against the existing file, or a clearly labeled new-file diff when it does not exist. In refresh mode, identify preserved manual rules and justify each removal or semantic change.
 9. **Tooling recommendations:** the separate evidence-based report from Phase 4, including "none" when appropriate. State explicitly that installation or configuration requires a separate user request and confirmation.
 10. **Omissions/uncertainties:** what was deliberately excluded and why.
+11. **Follow-up register:** every verified finding, tooling recommendation, cleanup item, or workflow side effect that the displayed diff will not resolve. For each item, state its disposition, why it remains open or requires no action, and the concrete next action when one exists. Write `none` when the register is empty.
 
-Then ask exactly one explicit confirmation question: whether to apply exactly the displayed `.pi/APPEND_SYSTEM.md` diff. Prefer the structured question tool when available. Stop and wait. A vague acknowledgement is not approval; obtain an unambiguous yes/no answer.
+Maintain this follow-up register through approval and application. Then ask exactly one explicit confirmation question: whether to apply exactly the displayed `.pi/APPEND_SYSTEM.md` diff. Prefer the structured question tool when available. Stop and wait. A vague acknowledgement is not approval; obtain an unambiguous yes/no answer.
 
 ## Phase 7: apply only after approval
 
@@ -143,5 +144,6 @@ Only after explicit approval of the displayed diff:
 2. In initialization mode, create `.pi/` if necessary and write the approved new `.pi/APPEND_SYSTEM.md`. In refresh mode, apply only the approved diff hunks so all undisplayed manual content remains untouched.
 3. Do not apply tooling recommendations and do not change any other file.
 4. Read the resulting file back and verify it matches the approved final content and diff.
-5. Show the final path and a concise change summary. If possible, verify that no other project file was changed by this workflow without disturbing pre-existing user changes.
-6. Tell the user to run `/reload` or restart Pi so the new appended system prompt is loaded. Mention that project trust/approval may be required for project-local `.pi` resources.
+5. Show the final path and a concise change summary. Compare the final working tree with the Phase 1 baseline without disturbing pre-existing user changes, and explicitly report any workflow-created side effects, including ignored or generated files.
+6. Repeat the complete follow-up register in the final response, even if every item was already reported before approval. Mark each item as open, deferred, rejected, or no action; never silently drop a recommendation or cleanup item because it is outside this workflow. If the register is empty, say so explicitly.
+7. Tell the user to run `/reload` or restart Pi so the new appended system prompt is loaded. Mention that project trust/approval may be required for project-local `.pi` resources.
