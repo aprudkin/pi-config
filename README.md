@@ -99,7 +99,7 @@ The worker may delegate only to `scout` and `researcher`. See [`extensions/inter
 
 ## Observational memory
 
-The package is installed but disabled by default. Enable it only for sessions long enough to justify extra observer/consolidator calls:
+The package is installed but disabled by default. Its default OpenRouter workers are overridden in `settings.json`: observers use `openai-codex/gpt-5.6-luna` at low thinking and the consolidator uses `openai-codex/gpt-5.6-terra` at medium thinking. Enable it only for sessions long enough to justify extra worker calls:
 
 ```text
 /om on
@@ -109,7 +109,11 @@ The package is installed but disabled by default. Enable it only for sessions lo
 /om off
 ```
 
-Per-session state is written under `.memory/<sessionId>/` in the active project. See [`extensions/observational-memory/README.md`](extensions/observational-memory/README.md).
+Per-session state is written under `.memory/<sessionId>/` in the active project. This config repository ignores `.memory/` because it is runtime state that may contain sensitive conversation-derived summaries; other projects should make an explicit ignore-or-version decision.
+
+A live test on a pre-existing long session verified observer batches, ledger entries, cost tracking, deterministic compaction, and consolidation into `INDEX.md`, `JOURNEY.md`, and five topic files. Enabling it late on a very large backlog caused a burst of 37 worker calls costing about `$0.36` before catch-up completed, so prefer enabling it near the start of a session.
+
+See [`extensions/observational-memory/README.md`](extensions/observational-memory/README.md).
 
 ## Voice dictation
 

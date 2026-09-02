@@ -16,7 +16,12 @@ The executable package is installed through `settings.json` and pinned to commit
 
 This directory is documentation-only; do not add a second copy of the extension here.
 
-Observational memory is intentionally disabled by default because observers and consolidation run additional Pi subprocesses. Enable it for selected long sessions:
+Observational memory is intentionally disabled by default because observers and consolidation run additional Pi subprocesses. The global configuration overrides the unavailable upstream OpenRouter defaults with:
+
+- observer: `openai-codex/gpt-5.6-luna`, thinking `low`;
+- consolidator: `openai-codex/gpt-5.6-terra`, thinking `medium`.
+
+Enable it for selected long sessions, preferably near the beginning rather than after a large backlog has accumulated:
 
 ```text
 /om on
@@ -26,4 +31,19 @@ Observational memory is intentionally disabled by default because observers and 
 /om off
 ```
 
-Session-specific state is written under `.memory/<sessionId>/` in the active project. Review that project-local state before deciding whether it should be ignored or committed.
+Session-specific state is written under `.memory/<sessionId>/` in the active project. The pi-config repository ignores this directory because its files are conversation-derived runtime state and can contain sensitive summaries. Review the policy separately in every other project before deciding whether to ignore or commit it.
+
+## Verified behavior
+
+A real test on the existing long Pi setup session confirmed:
+
+- `/om on` persisted the per-session gate in the ledger;
+- Luna observers produced atomic observation batches and cost entries;
+- no Groq API-key pattern appeared in observer results or durable memory files;
+- the Terra consolidator created `INDEX.md`, `JOURNEY.md`, and five topic files;
+- memory-aware compaction rendered journey, topic map, and active observations;
+- `/om off` stopped all workers and persisted the disabled state.
+
+The catch-up processed 35 observation batches containing 426 atomic observations. In total, 37 observer/consolidator runs recorded about `$0.3635`. Several compactions occurred while the old oversized backlog converged below the 150k threshold; this was a catch-up effect, not representative of enabling memory near the start of a normal session.
+
+> Do not send secrets in chat. Observers receive raw conversation chunks. The test proved only that the specific secret pattern was not copied into generated observations or durable Markdown, not that raw worker input is a safe secret channel.
