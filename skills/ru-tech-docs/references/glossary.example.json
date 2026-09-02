@@ -1,0 +1,47 @@
+{
+  "do_not_translate": [
+    "MSSQL",
+    "SQL Server",
+    "ONLINE",
+    "RESTORE VERIFYONLY",
+    "SHA-256"
+  ],
+  "terms": [
+    {
+      "preferred": "полная резервная копия",
+      "forbidden": [
+        "full backup",
+        "полный backup"
+      ],
+      "note": "Использовать в повествовательном тексте."
+    },
+    {
+      "preferred": "холодное хранилище",
+      "forbidden": [
+        "cold storage",
+        "cold-хранилище"
+      ]
+    },
+    {
+      "preferred": "список баз данных",
+      "forbidden": [
+        "database roster",
+        "roster баз данных"
+      ]
+    },
+    {
+      "preferred": "маркер готовности",
+      "forbidden": [
+        "readiness marker",
+        "marker готовности"
+      ]
+    },
+    {
+      "preferred": "промежуточный каталог",
+      "forbidden": [
+        "stage directory",
+        "staging directory"
+      ]
+    }
+  ]
+}
