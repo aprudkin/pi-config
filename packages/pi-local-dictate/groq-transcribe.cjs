@@ -9,7 +9,7 @@ const endpoint = process.env.GROQ_STT_URL || 'https://api.groq.com/openai/v1/aud
 const model = process.env.GROQ_STT_MODEL || 'whisper-large-v3';
 const language = process.env.GROQ_STT_LANGUAGE || 'ru';
 const prompt = process.env.GROQ_STT_PROMPT ||
-  'Техническая диктовка на русском языке. Термины и написание: Pi, tmux, Orca, Obsidian, Git, GitHub, API, Groq, Whisper Large v3, TypeScript, JavaScript, Python, Docker, Kubernetes.';
+  'Техническая диктовка на русском языке про coding agents и terminal workflow. Пример правильного написания: «Проверь Pi через tmux и Groq Whisper Large v3. Открой Obsidian, GitHub и путь /tmp/test-file». Термины: Pi, tmux, Orca, Obsidian, Git, GitHub, API, Groq, Whisper Large v3, TypeScript, JavaScript, Python, Docker, Kubernetes.';
 
 if (!rawPath) {
   console.error('usage: groq-transcribe.cjs <pcm16.raw>');

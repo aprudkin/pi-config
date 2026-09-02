@@ -45,7 +45,7 @@ export GROQ_STT_PROMPT='Краткий vocabulary/style prompt для текущ
 export GROQ_NORMALIZE_MODEL='qwen/qwen3.8-27b'
 ```
 
-After recognition, `normalize-transcript.cjs` conservatively post-edits the transcript with Groq Qwen. It may fix punctuation, casing, filler words, repetitions, and obvious technical-term spellings, but is instructed not to change meaning, negations, numbers, versions, commands, paths, URLs, filenames, or identifiers. Disable this second cloud call with:
+After recognition, `normalize-transcript.cjs` conservatively post-edits the transcript with Groq Qwen. It may fix punctuation, casing, filler words, repetitions, and context-supported ASR spellings such as Pi/tmux/Groq/Whisper. Existing filesystem paths and URLs are replaced with protected placeholders during the LLM call and restored byte-for-byte afterward. A narrow pre-pass canonicalizes obvious dictated-path artifacts such as `//tmp//test-file` to `/tmp/test-file` without changing `://` URLs. The model is instructed not to change meaning, negations, numbers, versions, commands, URLs, filenames, or identifiers. Disable this second cloud call with:
 
 ```bash
 export PI_DICTATE_NORMALIZE=0
@@ -97,7 +97,7 @@ npm --prefix ~/.pi/agent/packages/pi-local-dictate run check
 npm --prefix ~/.pi/agent/packages/pi-local-dictate audit --omit=dev
 ```
 
-The local worker and Groq transcription worker have both been exercised end-to-end with generated Russian audio. The Groq normalization worker was tested against Russian speech-like text containing Pi/tmux/Groq terminology, a version number, and a filesystem path. Final quality should also be tested with the user’s real microphone and vocabulary.
+The local worker and Groq transcription worker have both been exercised end-to-end with generated Russian audio. The Groq normalization worker was tested against distorted Russian ASR text, an ordinary nontechnical control phrase, protected URLs, version `3.7`, and filesystem path `/tmp/test-file`. A real Kitty → tmux → Pi microphone test produced the exact expected technical sentence with Pi, tmux, Groq Whisper Large v3, the version, and path preserved.
 
 ## Limitations
 
