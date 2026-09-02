@@ -1,0 +1,72 @@
+{
+  "refreshMs": 3000,
+  "iconFamily": "unicode",
+  "gaugeStyle": "blocks",
+  "gaugeWidth": 5,
+  "gaugeColors": {
+    "ok": "accent",
+    "warning": "warning",
+    "error": "error"
+  },
+  "defaultTextColor": "dim",
+  "defaultIconColor": "text",
+  "providerStatus": {
+    "refreshMs": 60000,
+    "cacheTtlMs": 60000,
+    "providers": [
+      "openai-codex"
+    ],
+    "display": "gauge",
+    "showCredits": false,
+    "showReset": "all",
+    "resetMinUsedPercent": 0
+  },
+  "widgets": {
+    "context-bar": {
+      "row": 0,
+      "position": 0,
+      "align": "left",
+      "fill": "none"
+    },
+    "provider-status": {
+      "enabled": true,
+      "row": 0,
+      "position": 1,
+      "align": "left",
+      "fill": "none",
+      "minWidth": 20
+    },
+    "total-cost": {
+      "enabled": false
+    },
+    "provider": {
+      "enabled": false
+    },
+    "commit": {
+      "enabled": false
+    },
+    "location": {
+      "row": 1,
+      "position": 0,
+      "align": "left"
+    },
+    "branch": {
+      "row": 1,
+      "position": 1,
+      "align": "left",
+      "textColor": "success"
+    },
+    "model": {
+      "row": 1,
+      "position": 6,
+      "align": "right",
+      "textColor": "text"
+    },
+    "thinking": {
+      "row": 1,
+      "position": 7,
+      "align": "right",
+      "textColor": "accent"
+    }
+  }
+}
