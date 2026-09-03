@@ -1,9 +1,11 @@
 ---
 name: sshai
-description: Execute non-interactive sshai commands on Windows PowerShell hosts and Linux-family Bash or explicitly selected POSIX-shell hosts with bounded output and local artifacts.
+description: Execute non-interactive sshai commands on Windows PowerShell hosts and Linux-family Bash or explicitly selected POSIX-shell hosts with bounded output and local artifacts. Use for remote command execution through an AI coding agent.
+license: MIT
+compatibility: Requires the sshai CLI, system OpenSSH, and configured ssh_config aliases.
 ---
 
-Use the installed `sshai` binary through Pi's shell-capable `bash` tool for non-interactive command execution on Windows PowerShell 7 or 5.1 and Linux-family hosts reachable through an `ssh_config` alias. Linux-family execution defaults to Bash; select an explicit POSIX shell when the host, such as OpenWrt, does not provide Bash. Confirm availability with `command -v sshai`. Read `sshai help` and `sshai help run` when a command, flag, or output contract is uncertain; the CLI does not provide a `--version` command.
+Use the installed `sshai` binary through the agent harness's non-interactive shell execution tool. It supports Windows PowerShell 7 or 5.1 and Linux-family hosts reachable through an `ssh_config` alias. Linux-family execution defaults to Bash; select an explicit POSIX shell when the host, such as OpenWrt, does not provide Bash. Confirm availability with `command -v sshai`. Read `sshai help` and `sshai help run` when a command, flag, or output contract is uncertain; the CLI does not provide a `--version` command.
 
 ## Execute
 
