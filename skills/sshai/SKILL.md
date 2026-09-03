@@ -37,7 +37,16 @@ sshai run --powershell-host windows-powershell --body-file check.ps1 windows01
 
 The only supported values are `pwsh` and `windows-powershell`; an invalid selector is a usage error. The selector affects Windows body execution; Linux hosts in the same fan-out are unaffected. Do not describe Windows PowerShell 5.1 as unsupported or use a fallback solely because it is 5.1.
 
-Treat the passport status line as the source of truth. A transport failure is reported as `transport-error=<class>` and may include a bounded canonical diagnostic. In human output, JSON output, and the saved artifact, only that sanitized diagnostic is exposed; raw SSH stderr, host keys, SSH configuration, algorithm offers, identities, and secrets are never passed through. Query a large stored result locally with `sshai q <id> -- <tool> <args>`; use `sshai diff` or `--delta` for repeated checks instead of loading or rerunning full output.
+For one long-running host command, request an ephemeral structured event stream explicitly:
+
+```bash
+sshai run --follow <host> -- <command>
+sshai run --follow --follow-interval 5 <host> -- <command>
+```
+
+Follow events are JSONL on stderr; the normal human passport or JSON v1 result remains on stdout. The interval is in seconds, defaults to `10`, and must be at least `1`. Follow mode accepts exactly one host. Treat heartbeats as truthful elapsed-time signals, not application progress. Live combined-output previews are bounded, may end with `output_suppressed`, and are not authoritative; use the saved artifact for complete captured evidence. The stream is not persisted and does not imply polling, replay, retry, or authorization.
+
+Treat the passport status line as the source of truth. A transport failure is reported as `transport-error=<class>` and may include a bounded canonical diagnostic. In human output, JSON output, and the saved artifact, only that sanitized diagnostic is exposed; raw SSH diagnostics, host keys, SSH configuration, algorithm offers, identities, and secrets are never passed through. Query a large stored result locally with `sshai q <id> -- <tool> <args>`; use `sshai diff` or `--delta` for repeated checks instead of loading or rerunning full output.
 
 The transport never authorizes a server mutation. Retain the task's exact target, preconditions, rollback, and post-change verification. Get confirmation before remote, destructive, production, external, or hard-to-reverse actions not already authorized by the request.
 
