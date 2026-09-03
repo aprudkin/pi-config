@@ -1,0 +1,4 @@
+{
+  "app.editor.external": ["ctrl+g", "super+enter"],
+  "app.session.tree": "shift+super+enter"
+}
