@@ -19,6 +19,18 @@ All scripts share the same filter vocabulary (see "Shared filters" below). Run t
 python3 ~/.pi/agent/skills/analyze-sessions/scripts/<script>.py [args]
 ```
 
+### `list_sessions.py` — safe metadata inventory
+
+Lists session metadata only: full ID, recorded cwd, start timestamp, subagent status, parent ID, and transcript path. It never outputs prompt, message, or cost content. Use it to make bounded selections before rendering transcripts.
+
+```bash
+# Exact canonical project cwd, top-level only (the default), as JSON
+python3 list_sessions.py --cwd-exact "$(pwd -P)" --since 14d --json
+
+# Select one unambiguous session by its full UUID
+python3 list_sessions.py --session 019e475b-0000-0000-0000-000000000000 --json
+```
+
 ### `cost.py` — cost rollups
 
 Subagent costs are **included by default** so totals reflect actual spend. Pass `--show-subagents` to see the subagent share per row, or `--no-subagents` to exclude.
@@ -36,8 +48,8 @@ python3 cost.py --since 30d --by model
 # The 10 most expensive sessions of the last month
 python3 cost.py --since 30d --by session --limit 10
 
-# Cost of one project, all time
-python3 cost.py --cwd /path/to/your/project
+# Cost of one exact project cwd, all time
+python3 cost.py --cwd-exact /path/to/your/project
 
 # Grand total only
 python3 cost.py --since 30d --by total
@@ -59,8 +71,8 @@ python3 prompts.py --since 30d
 # Tighter cap, one prompt per JSONL line
 python3 prompts.py --since 7d --max-chars 1500 --format jsonl
 
-# One project's prompts
-python3 prompts.py --cwd /path/to/your/project --since 30d
+# One exact project's prompts
+python3 prompts.py --cwd-exact /path/to/your/project --since 30d
 
 # Prompts that mention a topic
 python3 prompts.py --grep "rate limit" --since 60d
@@ -77,17 +89,17 @@ The typical workflow for "find patterns I could turn into global instructions":
 # The most recent session
 python3 show_session.py --latest
 
-# A specific session by id prefix (8 chars is enough)
-python3 show_session.py --session 019e475b
+# A specific session by full id
+python3 show_session.py --session 019e475b-0000-0000-0000-000000000000
 
-# The most recent session in a project
-python3 show_session.py --latest --cwd /path/to/your/project
+# The most recent session for an exact project cwd
+python3 show_session.py --latest --cwd-exact /path/to/your/project
 
 # Include subagent transcripts inline below
-python3 show_session.py --session 019e475b --include-subagents-content
+python3 show_session.py --session 019e475b-0000-0000-0000-000000000000 --include-subagents-content
 
 # Drop thinking entirely / show fewer chars
-python3 show_session.py --session 019e475b --max-thinking -1 --max-tool-output 800
+python3 show_session.py --session 019e475b-0000-0000-0000-000000000000 --max-thinking -1 --max-tool-output 800
 ```
 
 Each tool result is fenced with `…[N more chars elided]…` if truncated. Default truncations: tool output 2000, assistant text 4000, thinking 600. Pass `0` to a limit to disable it, `-1` to `--max-thinking` to omit thinking entirely.
@@ -114,25 +126,29 @@ Each hit prints the session header plus a `python3 show_session.py --session <id
 
 ## Shared filters
 
-Available on **all four scripts**:
+Available on all scripts:
 
 | Flag | Meaning |
 |---|---|
 | `--since WHEN` / `--until WHEN` | `YYYY-MM-DD`, ISO datetime, or relative: `7d`, `2w`, `3h`, `30m` |
-| `--cwd SUBSTR` | Substring match on the session's real `cwd`. Repeatable. |
+| `--cwd SUBSTR` | Case-insensitive substring match on recorded `cwd`. Repeatable. |
+| `--cwd-exact PATH` | Literal, case-sensitive exact match on recorded `cwd`; no realpath resolution. Repeatable. |
 | `--model SUBSTR` | Substring match on model id. Repeatable. |
 | `--provider {anthropic,openai,google}` | |
-| `--session ID` | Session id or prefix (8 chars usually unique) |
+| `--session ID` | Full session ID or an unambiguous prefix. Zero or multiple matches are an error; use `--latest` where supported to choose newest. |
 | `--include-subagents` / `--no-subagents` | Override the script default |
-| `--limit N` | Cap items returned (caps groups, not sessions, for `cost.py` group views) |
+| `--limit N` | Cap items returned; `N` must be at least 1 (caps groups, not sessions, for `cost.py` group views) |
 | `--min-cost USD` | Drop sessions below this spend |
 | `--min-messages N` | Drop short sessions |
 | `--errors-only` | Only sessions with at least one `toolResult.isError` |
 | `--grep SUBSTR` | Case-insensitive substring on the session's concatenated user prompts |
 
+Repeated values within either cwd flag use OR semantics. Supplying both `--cwd` and `--cwd-exact` applies both filters (AND).
+
 ### Subagent defaults
+
 - `cost.py`: **included** (totals = real spend)
-- `prompts.py`, `show_session.py`, `search.py`: **excluded** (a subagent's "user" message is a task description written by another agent, not your prompt)
+- `list_sessions.py`, `prompts.py`, `show_session.py`, `search.py`: **excluded** (a subagent's "user" message is a task description written by another agent, not your prompt)
 
 ## Common queries
 
@@ -142,7 +158,7 @@ Available on **all four scripts**:
 | Daily spend trend, last 30 days | `python3 cost.py --since 30d --by day` |
 | Most expensive projects this month | `python3 cost.py --since 30d --by project --limit 10` |
 | Most expensive sessions ever | `python3 cost.py --by session --limit 10 --until 1d` |
-| Cost of one project | `python3 cost.py --cwd /path/to/proj` |
+| Cost of one project | `python3 cost.py --cwd-exact /path/to/proj` |
 | Patterns in my prompting | `python3 prompts.py --since 30d --max-chars 1500` → read the output |
 | What did I do yesterday | `python3 show_session.py --latest --since 1d` |
 | Where did the agent struggle | `python3 cost.py --since 30d --errors-only --by session --limit 10` |
@@ -153,3 +169,4 @@ Available on **all four scripts**:
 - All paths are read-only; the scripts never modify session files.
 - The library (`scripts/sessions.py`) is reusable: import it for ad-hoc analysis.
 - A full scan over a few hundred sessions takes ~1–2 seconds. No caching.
+- Human displays and generated drill-down commands use full IDs, avoiding collisions across the complete discovered corpus.

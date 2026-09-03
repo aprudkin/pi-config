@@ -47,7 +47,11 @@ def main() -> int:
     if args.by != "total":
         filters.limit = None
 
-    summaries = S.load_summaries(filters)
+    try:
+        summaries = S.load_summaries(filters)
+    except S.SessionSelectionError as e:
+        S.stderr(e)
+        return 2
 
     if not summaries:
         S.stderr("No sessions matched.")
@@ -202,7 +206,7 @@ def print_grouped(summaries, by: str, *, show_subagents: bool, limit) -> None:
 
 def _render_key(k: str, by: str) -> str:
     if by == "session":
-        return k[:8] if k else "?"
+        return k or "?"
     return k or "?"
 
 

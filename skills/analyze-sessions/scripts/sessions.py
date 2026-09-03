@@ -160,7 +160,11 @@ class SessionSummary:
 
     @property
     def short_id(self) -> str:
-        return self.id[:8] if self.id else ""
+        """Safe display identifier.
+
+        Full IDs avoid prefix collisions across the complete session corpus.
+        """
+        return self.id
 
     @property
     def project_label(self) -> str:
@@ -299,6 +303,7 @@ class Filters:
     since: Optional[datetime] = None
     until: Optional[datetime] = None
     cwd_substrs: list = field(default_factory=list)
+    cwd_exacts: list = field(default_factory=list)
     model_substrs: list = field(default_factory=list)
     provider: Optional[str] = None
     session_id: Optional[str] = None  # exact or prefix
@@ -313,14 +318,16 @@ class Filters:
         if self.session_id:
             if not (s.id == self.session_id or s.id.startswith(self.session_id)):
                 return False
-        if self.since and s.started_at and s.started_at < self.since:
+        if self.since and (not s.started_at or s.started_at < self.since):
             return False
-        if self.until and s.started_at and s.started_at > self.until:
+        if self.until and (not s.started_at or s.started_at > self.until):
             return False
         if self.cwd_substrs:
             cwd_low = (s.cwd or "").lower()
             if not any(sub.lower() in cwd_low for sub in self.cwd_substrs):
                 return False
+        if self.cwd_exacts and s.cwd not in self.cwd_exacts:
+            return False
         if self.model_substrs:
             joined = " ".join(s.models).lower()
             if not any(sub.lower() in joined for sub in self.model_substrs):
@@ -339,6 +346,14 @@ class Filters:
         return True
 
 
+def positive_int(value: str) -> int:
+    """Parse a strictly positive integer for CLI count limits."""
+    parsed = int(value)
+    if parsed < 1:
+        raise argparse.ArgumentTypeError("must be at least 1")
+    return parsed
+
+
 def add_filter_args(p: argparse.ArgumentParser, *, subagents_default: bool) -> None:
     """Attach the shared filter flags to a parser.
 
@@ -349,11 +364,13 @@ def add_filter_args(p: argparse.ArgumentParser, *, subagents_default: bool) -> N
     p.add_argument("--until", metavar="WHEN", help="Upper bound, same formats as --since.")
     p.add_argument("--cwd", action="append", default=[], metavar="SUBSTR",
                    help="Substring(s) matched against session cwd. Repeatable; any match wins.")
+    p.add_argument("--cwd-exact", action="append", default=[], metavar="PATH",
+                   help="Literal exact match on recorded session cwd. Repeatable; any match wins.")
     p.add_argument("--model", action="append", default=[], metavar="SUBSTR",
                    help="Substring(s) matched against model id. Repeatable; any match wins.")
     p.add_argument("--provider", choices=["anthropic", "openai", "google"],
                    help="Restrict by provider.")
-    p.add_argument("--session", metavar="ID", help="Session id or prefix.")
+    p.add_argument("--session", metavar="ID", help="Full session id or unambiguous prefix.")
     sub = p.add_mutually_exclusive_group()
     sub.add_argument("--include-subagents", dest="include_subagents",
                      action="store_const", const=True, default=None,
@@ -361,7 +378,7 @@ def add_filter_args(p: argparse.ArgumentParser, *, subagents_default: bool) -> N
     sub.add_argument("--no-subagents", dest="include_subagents",
                      action="store_const", const=False,
                      help="Exclude subagent transcripts.")
-    p.add_argument("--limit", type=int, help="Cap the number of items returned.")
+    p.add_argument("--limit", type=positive_int, help="Cap the number of items returned (minimum: 1).")
     p.add_argument("--min-cost", type=float, metavar="USD",
                    help="Drop sessions whose total cost is below this.")
     p.add_argument("--min-messages", type=int, metavar="N",
@@ -379,6 +396,7 @@ def filters_from_args(args: argparse.Namespace, *, subagents_default: bool) -> F
     if getattr(args, "until", None):
         f.until = parse_date(args.until)
     f.cwd_substrs = list(getattr(args, "cwd", []) or [])
+    f.cwd_exacts = list(getattr(args, "cwd_exact", []) or [])
     f.model_substrs = list(getattr(args, "model", []) or [])
     f.provider = getattr(args, "provider", None)
     f.session_id = getattr(args, "session", None)
@@ -392,8 +410,17 @@ def filters_from_args(args: argparse.Namespace, *, subagents_default: bool) -> F
     return f
 
 
+class SessionSelectionError(ValueError):
+    """A singular --session selector did not resolve to exactly one session."""
+
+
 def load_summaries(filters: Filters) -> list:
-    """Discover, summarize, and filter sessions. Sorted newest first."""
+    """Discover, summarize, and filter sessions, sorted newest first.
+
+    A supplied ``--session`` is a singular selector: it must resolve to exactly
+    one match before ``--limit`` is applied. ``--latest`` remains the explicit
+    newest-of-many choice in consumers that offer it.
+    """
     out: list = []
     for path in iter_session_files(include_subagents=bool(filters.include_subagents)):
         s = summarize_session(path)
@@ -403,6 +430,16 @@ def load_summaries(filters: Filters) -> list:
             out.append(s)
     out.sort(key=lambda x: x.started_at or datetime.min.replace(tzinfo=timezone.utc),
              reverse=True)
+    if filters.session_id:
+        if not out:
+            raise SessionSelectionError(f"No session matches --session {filters.session_id!r}.")
+        if len(out) > 1:
+            matches = ", ".join(s.id for s in out[:10])
+            if len(out) > 10:
+                matches += f", … ({len(out) - 10} more)"
+            raise SessionSelectionError(
+                f"--session {filters.session_id!r} is ambiguous ({len(out)} matches): "
+                f"{matches}. Use a full UUID.")
     if filters.limit:
         out = out[: filters.limit]
     return out

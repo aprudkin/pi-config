@@ -39,7 +39,11 @@ def main() -> int:
     args = p.parse_args()
 
     filters = S.filters_from_args(args, subagents_default=False)
-    summaries = S.load_summaries(filters)
+    try:
+        summaries = S.load_summaries(filters)
+    except S.SessionSelectionError as e:
+        S.stderr(e)
+        return 2
 
     # Re-scan each matching session and collect its user prompts.
     sess_prompts = []  # list of (summary, [prompts])

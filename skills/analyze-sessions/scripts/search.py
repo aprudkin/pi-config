@@ -63,7 +63,11 @@ def main() -> int:
                 start = i + max(1, len(needle))
 
     filters = S.filters_from_args(args, subagents_default=False)
-    summaries = S.load_summaries(filters)
+    try:
+        summaries = S.load_summaries(filters)
+    except S.SessionSelectionError as e:
+        S.stderr(e)
+        return 2
 
     total_hits = 0
     sessions_with_hits = 0
@@ -149,7 +153,7 @@ def _collect(text: str, kind: str, matcher, finditer, context_lines: int,
 def _print_session_hits(s: S.SessionSummary, hits) -> None:
     print(f"── {S.fmt_short_ts(s.started_at)}  ·  {s.short_id}  ·  "
           f"{S.fmt_money(s.cost_total)}  ·  {s.cwd}")
-    print(f"   view: python3 show_session.py --session {s.short_id}")
+    print(f"   view: python3 show_session.py --session {s.id}")
     for h in hits:
         print(f"   [{h['kind']} L{h['line']}]")
         for line in h["snippet"].splitlines():

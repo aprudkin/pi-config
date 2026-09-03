@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """Render a single pi session as readable markdown.
 
-Picks a session via --session ID/prefix, --latest, or applies the standard
+Picks a session via --session ID (or an unambiguous prefix), --latest, or applies the standard
 filters and renders the most recent match. Long tool outputs and assistant
 content are truncated so the output stays digestible.
 
 Examples:
   python3 show_session.py --latest
-  python3 show_session.py --session 019e475b
+  python3 show_session.py --session 019e475b-0000-0000-0000-000000000000
   python3 show_session.py --cwd /Volumes/T7/code/blanc --latest
-  python3 show_session.py --session 019e475b --max-tool-output 4000
+  python3 show_session.py --session 019e475b-0000-0000-0000-000000000000 --max-tool-output 4000
   python3 show_session.py --latest --include-subagents-content
 """
 
@@ -44,7 +44,11 @@ def main() -> int:
     args = p.parse_args()
 
     filters = S.filters_from_args(args, subagents_default=False)
-    summaries = S.load_summaries(filters)
+    try:
+        summaries = S.load_summaries(filters)
+    except S.SessionSelectionError as e:
+        S.stderr(e)
+        return 2
 
     if not summaries:
         S.stderr("No matching session.")
