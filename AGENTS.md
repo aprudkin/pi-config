@@ -27,6 +27,9 @@
 - Before modifying any `AGENTS.md`, run exactly one read-only reviewer pass on the complete proposed change. Have the reviewer check it against relevant current primary sources and community `AGENTS.md` guidance, focusing on scope, precedence, recursion, necessity, and prompt overhead. The reviewer must not edit files or invoke another reviewer. For small or routine edits, use a targeted source check rather than broad research. Do not apply the change until material conflicts or scope risks are resolved. This requirement also applies to changes to this rule itself.
 - Load the narrowest clearly matching skill before material work, without asking the user to choose an obvious route.
 - Proactively use subagents for most non-trivial tasks when research, review, or implementation can benefit from delegation.
+- A delegated subagent must not create further subagents by default. Nested delegation requires its coordinator’s explicit authorization for the current task, which must state a maximum descendant depth and maximum direct-child fan-out. Higher-precedence instructions continue to apply.
+- Names are unique and persist only within the spawning parent’s session. Each parent must assign distinct, never-reused direct-child names; parent-qualified names (for example, `coordinator/research-1`) are a convention for human traceability, not cross-session addressing.
+- A parent remains responsible for its direct children: pass only task-specific context to limit prompt overhead, and use `subagent_message` only with the exact name registered in that parent’s session. An ancestor must communicate with a grandchild through its direct child, never by an inferred hierarchical name.
 - Subagents may edit files when the coordinator judges that effective; the coordinator remains responsible for reviewing and integrating their work.
 
 ## Verification
