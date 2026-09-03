@@ -25,5 +25,6 @@
       }
     }
   },
-  "hideThinkingBlock": false
+  "hideThinkingBlock": false,
+  "tuiMode": "regular"
 }
