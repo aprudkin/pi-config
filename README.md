@@ -159,6 +159,7 @@ See [`packages/pi-local-dictate/README.md`](packages/pi-local-dictate/README.md)
 | `analyze-sessions` | session cost, prompt, and transcript analysis |
 | `better-markdown` | evidence-preserving Markdown and README editing |
 | `pdf-reader` | PDF extraction and analysis |
+| `ru-tech-docs` | Russian technical-documentation writing and semantic-safe editing |
 | `sshai` | bounded non-interactive SSH execution through configured host aliases |
 | `web-debug` | browser-driven frontend debugging workflow |
 | `youtube-transcript` | YouTube title and transcript extraction |
@@ -167,9 +168,10 @@ Additional shared Orca skills are discovered from `~/.agents/skills/` and are in
 
 ## Dependencies
 
-Install extension-local dependencies only where a `package.json` exists:
+Install the root development dependencies used to typecheck standalone extensions, then install extension-local runtime dependencies where a `package.json` exists:
 
 ```bash
+npm ci
 npm ci --prefix extensions/bash-guard
 npm ci --prefix extensions/browser
 npm ci --prefix extensions/web-fetch
@@ -199,11 +201,12 @@ python3 -m venv ~/.pi/agent/skills/pdf-reader/.venv
 cd ~/.pi/agent
 git diff --check
 pi list
+npm run check:extensions
 npm --prefix packages/pi-local-dictate run check
 npm --prefix packages/pi-local-dictate audit --omit=dev
 ```
 
-After changing extension source or package settings, restart Pi or run `/reload`. A reload that reports no extension loading errors is the runtime smoke check for standalone extensions.
+`npm run check:extensions` checks repository-maintained standalone extensions; externally managed `extensions/orca-*.ts` files are excluded because they intentionally support both Pi and OMP without package-specific types. After changing extension source or package settings, restart Pi or run `/reload`. A reload that reports no extension loading errors is the runtime smoke check for all active extensions.
 
 ## Runtime and secrets
 

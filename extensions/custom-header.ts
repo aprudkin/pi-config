@@ -46,14 +46,14 @@ function buildHeader(theme: Theme): string {
 	// ── Keybinding hints ─────────────────────────────────
 	// Each entry is one line. Remove, reorder, or add your own.
 	// Use rawKeyHint("key", "description") for app-level shortcuts.
-	// Use keyHint("editorAction", "description") for editor shortcuts.
+	// Use keyHint("tui.editor.action", "description") for editor shortcuts.
 	const hints = [
 		rawKeyHint("escape", "to interrupt"),
 		rawKeyHint("ctrl+c", "to clear"),
 		rawKeyHint("ctrl+c twice", "to exit"),
 		rawKeyHint("ctrl+d", "to exit (empty)"),
 		rawKeyHint("ctrl+z", "to suspend"),
-		keyHint("deleteToLineEnd", "to delete to end"),
+		keyHint("tui.editor.deleteToLineEnd", "to delete to end"),
 		rawKeyHint("shift+tab", "to cycle thinking level"),
 		rawKeyHint("ctrl+p/shift+ctrl+p", "to cycle models"),
 		rawKeyHint("ctrl+l", "to select model"),

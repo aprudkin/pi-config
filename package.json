@@ -1,0 +1,17 @@
+{
+  "name": "pi-config",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check:extensions": "tsc -p tsconfig.extensions.json"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": "0.84.4",
+    "@earendil-works/pi-tui": "0.84.4",
+    "@types/node": "22.19.19",
+    "@types/shell-quote": "1.7.5",
+    "@types/turndown": "5.0.6",
+    "typebox": "1.3.7",
+    "typescript": "5.9.3"
+  }
+}
