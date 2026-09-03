@@ -1,0 +1,182 @@
+# Document patterns
+
+Structural patterns for the document types this skill supports. Load this reference when creating a new document or when a document's structure does not fit its type. Adapt to the document — never blindly apply a template.
+
+## How to use
+
+1. Identify the document type (below).
+2. Check the existing structure against the pattern.
+3. Restructure only when the deviation hurts readers; state your reason.
+
+## README
+
+Purpose: get a visitor from zero to productive in under a minute.
+
+### README, main (full — the deliverable when creating or improving a repo-root README)
+
+When **creating or improving the main README** (`README.md` at the repository root), the full pattern below is the deliverable — not a stretch goal. Work through the checklist below in order, then compare the result against `examples/README.md` (a style reference only — see scope calibration). Before anything else, calibrate the scope:
+
+**Scope calibration:**
+
+- **Size gate**: if the improved README will be under ~200 lines, do **not** add navigational structure — no "Where to Start", no "Choose Your Path", no Navigate/index tables. Short READMEs get the opening (description, purpose), the sections their content demands, and nothing a reader cannot use. Navigational structure belongs only to long READMEs (~200+ lines) where readers actually need a map.
+- **Derive structure from the document's content** — never copy sections from `examples/` or reference files. A section earns its place because the document's own content needs it, not because a template has it.
+- **Frontmatter**: never add YAML frontmatter or metadata fields (`ms.date`, `ms.topic`, `estimated_reading_time`, `keywords`, …) unless they are already present in the original or the user explicitly requests them. If present, keep and fix them.
+
+Then the checklist:
+
+1. **H1 + hero**: `# Project name`, then a centered banner (author a real SVG per `visual-assets` when one is missing).
+2. **Badge row** (detection-driven — see "Badges" below): check the worktree and repo for badge-supporting signals **before** adding anything.
+3. **Purpose paragraph**: one paragraph — what it is, when to use it, what it provides. Follow with one "Use it when…" sentence and a short "It provides:" bullet list.
+4. **Scope callout**: a `CAUTION` or `NOTE` stating what the project is and is not. **Always present** — honest scoping builds trust and prevents misuse.
+5. **Where to Start** (long READMEs only): numbered steps from zero to first useful result, then `TIP` callouts for alternative entry points.
+6. **Choose Your Path** (long READMEs only): one short entry per reader persona — new user, team lead, contributor — each with exactly one link. Never a paragraph per persona.
+7. **Navigate This Repository** (long READMEs only): a two-column goal table (`| Goal | Go here |`) mapping every reader intent to its exact path. This is the single highest-value navigation pattern; keep every row a verb-first goal and every cell an anchor link to the matching section.
+8. **Tech Stack** (detection-driven — see "Tech stack section" below): a restrained icon row near the top, right after the description.
+9. **Features**: what it does, in scannable bullets.
+10. **Install**: numbered steps from nothing to running — its own section.
+11. **Quick Start**: the fastest useful example; a small code block beats prose — its own section. Keep Install and Quick Start **separate even when the steps overlap**; readers expect both headings.
+12. **API / Configuration** (conditional — only if the project exposes one).
+13. **Screenshots**: after the core sections; screenshots the agent cannot produce become `VISUAL SUGGESTION` comments at the exact location.
+14. **Documentation**: a guide table (`| Guide | Description |`) for deeper docs, plus a docs-site link when one exists.
+15. **Contact / About** (conditional — when the project has them): real addresses only — no invented emails or handles.
+16. **Contributing**: **always present** — link to the guide, open issues, and discussions (three links, no prose); when the repo has no contributing guide, use the three generic steps (fork, feature branch, pull request) or link to issues. Never omit silently.
+17. **License**: link or short text.
+
+**Badges** (detection-driven — apply before editing):
+
+Detect badge-supporting signals in the worktree and any linked repository:
+
+- `package.json` with a `name` field → npm version badge (`https://img.shields.io/npm/v/<package-name>`)
+- `.github/workflows/` → CI build status badge (`https://img.shields.io/github/actions/workflow/status/<owner>/<repo>/<workflow-file>`)
+- A GitHub repo URL in `package.json`, `pyproject.toml`, or the README itself → license, stars, issues, last-commit badges
+- A `codecov.yml` or `.coveralls.yml` → coverage badge
+- A `LICENSE` file → license badge
+
+If the README already has badges, check whether additional supported badges can be added. If it has no badges at all and the worktree supports them, add a badge row directly after the H1. Only add badges whose URLs can be constructed from verified information — never guess an owner, repo name, package name, or workflow filename. If a badge URL cannot be fully constructed from known values, skip it; do not placeholder it.
+
+**Tech stack section** (detection-driven — apply before editing):
+
+Detect the stack from two sources:
+
+- The README — any named languages, frameworks, or tools
+- The worktree — `package.json` (Node/npm), `requirements.txt` / `pyproject.toml` (Python), `Cargo.toml` (Rust), `go.mod` (Go), `*.csproj` (.NET), `Dockerfile` (Docker), `*.tf` (Terraform)
+
+If a stack is detected and the README has no tech stack section, add one after the opening description, before Features or Install. Use **Simple Icons** for each technology (`https://cdn.simpleicons.org/<slug>/<hex-color>`); confirm each slug on simpleicons.org before rendering. If a slug cannot be confirmed, omit that icon — do not guess. If no icons can be confirmed, place a `VISUAL SUGGESTION [TECH_STACK]` comment listing the detected technologies instead.
+
+Rules: every table is goal-first (reader intent → destination); one link per intent, never repeated; link text is the section title (anchor links slugify GitHub headings); all anchors must resolve to real headings; badges truthful; callouts sparse (one scope CAUTION plus TIPs).
+
+**Do not under-deliver — within calibration**: stopping after improved prose, fixed lists, or a "polished draft" is a failure for a main README. Sections the content supports are omitted only when the project genuinely lacks the content — then record the omission in your final report. Never fake content to fill a section — and never inflate a short README with navigational scaffolding it does not need.
+
+**Support detection — degrade only when the context cannot support the full pattern** (non-GitHub renderer, no repo, no assets directory): drop badges that cannot be constructed from verified values; drop the hero if no asset can be created; skip navigational sections when the README stays under ~200 lines; fall back to the minimal README pattern below rather than emitting broken or fabricated parts.
+
+### README, minimal (fallback)
+
+For non-GitHub targets, internal quick docs, or when the full pattern is unsupported:
+
+- `# Project name` (H1, often with a logo image above/inside it)
+- One-sentence description under the title
+- **Features** — what it does, in scannable bullets
+- **Installation** — minimal steps from nothing to running
+- **Usage** — the fastest useful example; a small code block beats prose
+- **API / Configuration** — only if the project exposes one
+- **Documentation** — links to deeper docs (API reference, tutorials)
+- **Contributing** — link to CONTRIBUTING.md
+- **License** — link or short text
+
+Rules: no wall-of-text intros, no marketing fluff, no redundant "what is X" for famous technologies. Screenshots belong near the top (after features) where they show the thing working.
+
+**Scope: the full README pattern applies only to the main README.** Other document types — API documentation, tutorials, how-tos, references, specifications, architecture docs, changelogs, requirements — keep their own patterns below and never receive README-only structures (badge rows, goal-navigation tables, persona sections, tech-stack icon rows). If a non-README document has grown README-style sections, do not add to them; report the drift and leave them alone unless the user asks.
+
+## API documentation
+
+Purpose: allow a developer to use an interface without reading source code.
+
+Per endpoint / function / method:
+
+- Signature in a fenced code block (language specified) — exact, copyable
+- One-line description
+- Parameters table: name | type | required | description
+- Return value and type
+- Error cases (when relevant)
+- One complete example request + response
+- Related endpoints (links)
+
+Rules: signatures and identifiers are sacred — never reformat or "improve" them. Keep the parameter table column count consistent.
+
+## Tutorial
+
+Purpose: teach a complete task, end to end, with working results.
+
+- `# Title` phrased as the outcome ("Build a CLI with Node.js")
+- **Prerequisites** — exact versions and prior knowledge
+- Numbered steps, one action each; each step ends with a verifiable result ("You should see…")
+- Code blocks the reader can copy and run as written (no `$`, no placeholders left unexplained)
+- **Next steps** at the end
+
+Rules: never skip steps, never assume unstated state, keep steps ordered and numbered.
+
+## How-to
+
+Purpose: solve one specific problem quickly.
+
+- Short title phrased as the task
+- One or two sentences on when this is needed
+- Prerequisites (one line)
+- Numbered procedure
+- Stop. No background essays, no alternatives unless asked.
+
+## Reference
+
+Purpose: complete, accurate listing (CLI flags, config keys, constants).
+
+- Organized by category; alphabetical within category when order is irrelevant
+- Tables or definition lists for items: name | default | meaning
+- No tutorial prose
+
+## Specification
+
+Purpose: define behavior precisely and unambiguously.
+
+- `# Title` + version + status (draft / stable)
+- **Terminology** — define every term used
+- **Requirements** numbered (R1, R2, …) so they can be referenced
+- **Behavior** described deterministically: inputs, outputs, edge cases
+- **Constraints** — non-functional requirements (performance, security, compatibility)
+- **Out of scope** — explicitly what this spec does not cover
+- **Change history** table or changelog section
+
+Rules: imperative, precise language; no fluff; decisions must be traceable.
+
+## Architecture / design document
+
+- `# Title` + status + date
+- **Context** — the problem and constraints
+- **Goals / Non-goals**
+- **Options considered** — alternatives with trade-offs
+- **Decision** — what was chosen and why (links to ADRs when present)
+- **Diagram** — ASCII, Mermaid (GitHub target only), or image
+- **Consequences** — what this decision affects
+
+## Changelog
+
+Keep a Changelog convention: <https://keepachangelog.com/>
+
+- `# Changelog` (H1); reverse chronological order, newest first
+- `## [Unreleased]` at top, then `## [1.0.0] - YYYY-MM-DD`
+- Change types as H3s: `### Added`, `### Changed`, `### Deprecated`, `### Removed`, `### Fixed`, `### Security`
+- Repeated subheadings across versions are correct — do not rename or deduplicate
+- Each version links to its diff when the repo is public: `[1.0.0]: https://github.com/owner/repo/compare/v0.9.0...v1.0.0`
+
+## Requirements / SOP / Troubleshooting / Knowledge base
+
+- **Requirements**: numbered requirements, priorities (must/should/could), acceptance criteria.
+- **SOP**: purpose, scope, prerequisites, numbered steps with responsible roles, error handling, rollback.
+- **Troubleshooting**: symptom → cause → fix, one problem per section, with a "still broken?" escalation path.
+- **Knowledge base**: question or task title, short answer first, then detail, then related links.
+
+## Cross-type rules
+
+- Exactly one H1; hierarchy never skips levels; text between headings and subheadings.
+- Facts, identifiers, commands, and code are never "improved" during restructuring.
+- Preserve links and assets; update them only if they break.
+- When in doubt about intent, ask rather than assume a template.

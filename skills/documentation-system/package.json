@@ -1,0 +1,39 @@
+{
+  "name": "@barlevalon/documentation-system-skill",
+  "version": "1.1.0",
+  "description": "Apply the Diátaxis framework to write, audit, organize, and improve tutorials, how-to guides, reference, explanation, and technical documentation architecture.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/barlevalon/skills.git",
+    "directory": "skills/documentation-system"
+  },
+  "bugs": {
+    "url": "https://github.com/barlevalon/skills/issues"
+  },
+  "homepage": "https://github.com/barlevalon/skills/tree/main/skills/documentation-system#readme",
+  "keywords": [
+    "agent-skill",
+    "agent-skills",
+    "ai-agent",
+    "documentation",
+    "documentation-system",
+    "pi",
+    "pi-package",
+    "skills"
+  ],
+  "files": [
+    "LICENSE",
+    "README.md",
+    "SKILL.md"
+  ],
+  "scripts": {
+    "pack:check": "npm pack --dry-run"
+  },
+  "pi": {
+    "skills": [
+      "./SKILL.md"
+    ]
+  },
+  "curator": "Alon Hearter"
+}
