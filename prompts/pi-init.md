@@ -34,8 +34,9 @@ Follow this workflow exactly.
 2. Determine which ancestor context files actually apply to this cwd, without recursively scanning ancestor projects.
 3. Inventory relevant paths inside the project without reading excluded or sensitive content.
 4. Check whether `.pi/APPEND_SYSTEM.md` already exists and, if so, read it as the current Pi layer, including any manually maintained rules that must be preserved. Treat absence as initialization mode and presence as refresh mode; state the selected mode.
-5. Load the global `analyze-sessions` skill and use its metadata-only selector first: `python3 ~/.pi/agent/skills/analyze-sessions/scripts/list_sessions.py --cwd-exact "$(pwd -P)" --since 14d --no-subagents --json`. Select up to five newest returned top-level sessions whose recorded `cwd` exactly equals `pwd -P`; `--cwd-exact` compares literal metadata strings and `pwd -P` supplies the canonical path. The selected set must include the current session; exclude nested subagent transcripts from the five-session count. Use only returned full UUIDs for any subsequent transcript drill-down. If the current session cannot be identified or read, stop and report the limitation without writing anything. If fewer than five matching sessions exist, analyze all matches; do not broaden scope.
-6. Identify the dominant language of the existing project instructions. Write the proposed file in that language; if there is no clear dominant language, use English.
+5. Determine the current project's configured GitHub or GitLab issue tracker from explicit project configuration, then repository remotes. Record the verified provider and target repository for use in local instructions; if the target is ambiguous or absent, record that instead of guessing.
+6. Load the global `analyze-sessions` skill and use its metadata-only selector first: `python3 ~/.pi/agent/skills/analyze-sessions/scripts/list_sessions.py --cwd-exact "$(pwd -P)" --since 14d --no-subagents --json`. Select up to five newest returned top-level sessions whose recorded `cwd` exactly equals `pwd -P`; `--cwd-exact` compares literal metadata strings and `pwd -P` supplies the canonical path. The selected set must include the current session; exclude nested subagent transcripts from the five-session count. Use only returned full UUIDs for any subsequent transcript drill-down. If the current session cannot be identified or read, stop and report the limitation without writing anything. If fewer than five matching sessions exist, analyze all matches; do not broaden scope.
+7. Identify the dominant language of the existing project instructions. Write the proposed file in that language; if there is no clear dominant language, use English.
 
 Use these active sources when present:
 
@@ -64,6 +65,8 @@ Do not treat historical plans/specifications (including `.superpowers` material)
 ## Phase 3: derive the Pi-only delta
 
 Prepare concise content for `.pi/APPEND_SYSTEM.md` that complements all already loaded project context. Explicitly account for the fact that Pi automatically loads the applicable `AGENTS.md`/`AGENTS.override.md`/`CLAUDE.md` hierarchy: the proposed file is a Pi-specific delta, not an adapted copy of those files.
+
+Always add or preserve a local issue-creation rule. It must treat a request to create or file an issue as authorization to create it in this project's configured GitHub or GitLab issue tracker. Use the verified provider and target repository when available; if the target is ambiguous or unconfigured, instruct Pi to ask before creating the issue. Never route an issue to an unrelated project or tracker.
 
 In initialization mode, propose the smallest useful new file. In refresh mode, propose a minimal patch: preserve manual rules, remove or change only content proven stale, conflicting, duplicated, or no longer useful, and explain every removal or semantic change.
 

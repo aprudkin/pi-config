@@ -16,7 +16,6 @@
 - Preserve the meaning and material content of source material; clearly identify intentional summarization, omission, or semantic rewriting.
 - Ask only when ambiguity materially affects the result or when data, access, cost, production, or hard-to-reverse consequences are involved.
 - Treat an explicit request as authorization for the stated action and necessary related steps within the same intended result, system, and scope.
-- Treat any request to create or file an issue as authorization to create it in the current project's configured GitHub or GitLab issue tracker. Resolve the target from explicit project configuration, then repository remotes; never route it to an unrelated tracker. Ask only when the target is ambiguous or unconfigured, or authentication blocks creation.
 - Ask before destructive, production, or external actions that are not clearly authorized by the request.
 - Install project dependencies when needed and update their lockfiles as appropriate; obtain confirmation before global or system-wide installation or persistent environment changes.
 - Never commit or publish secret values.
