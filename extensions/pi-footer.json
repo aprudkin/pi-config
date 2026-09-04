@@ -194,7 +194,7 @@
     ]
   ],
   "separator": "dot",
-  "separatorFg": "pi:dim",
+  "separatorFg": "pi:warning",
   "separatorBg": "default",
   "iconMode": "nerd",
   "minimalist": false,
