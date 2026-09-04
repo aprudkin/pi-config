@@ -1,5 +1,5 @@
 {
-  "lastChangelogVersion": "0.84.4",
+  "lastChangelogVersion": "0.85.0",
   "theme": "dark",
   "externalEditor": "/opt/homebrew/bin/code --wait",
   "defaultProvider": "openai-codex",
@@ -31,5 +31,12 @@
     }
   },
   "hideThinkingBlock": false,
-  "tuiMode": "regular"
+  "tuiMode": "fullscreen",
+  "markdown": {
+    "mermaid": "final"
+  },
+  "showCacheMissNotices": true,
+  "warnings": {
+    "anthropicExtraUsage": false
+  }
 }
