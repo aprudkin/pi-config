@@ -1,13 +1,26 @@
 ---
 name: sshai
-description: Execute non-interactive sshai commands on Windows PowerShell hosts and Linux-family Bash or explicitly selected POSIX-shell hosts with bounded output and local artifacts. Use for remote command execution through an AI coding agent.
+description: Execute bounded non-interactive commands through sshai, either locally with explicit Bash/PowerShell 7 selection or remotely on Windows PowerShell and Linux-family shell hosts. Use for command execution through an AI coding agent when durable artifacts and compact results are useful.
 license: MIT
-compatibility: Requires the sshai CLI, system OpenSSH, and configured ssh_config aliases.
+compatibility: Requires the sshai CLI; remote mode also requires system OpenSSH and configured ssh_config aliases.
 ---
 
-Use the installed `sshai` binary through the agent harness's non-interactive shell execution tool. It supports Windows PowerShell 7 or 5.1 and Linux-family hosts reachable through an `ssh_config` alias. Linux-family execution defaults to Bash; select an explicit POSIX shell when the host, such as OpenWrt, does not provide Bash. Confirm availability with `command -v sshai`. Read `sshai help` and `sshai help run` when a command, flag, or output contract is uncertain; the CLI does not provide a `--version` command.
+Use the installed `sshai` binary through the agent harness's non-interactive shell execution tool. It supports explicit local Bash or PowerShell 7 execution, plus remote Windows PowerShell 7 or 5.1 and Linux-family hosts reachable through an `ssh_config` alias. Linux-family remote execution defaults to Bash; select an explicit POSIX shell when the host, such as OpenWrt, does not provide Bash. Confirm availability with `command -v sshai`. Read `sshai help` and `sshai help <command>` when a command, flag, or output contract is uncertain; the CLI does not provide a `--version` command.
 
-## Execute
+## Execute locally
+
+Use local mode for bounded execution and durable evidence on the machine running the agent:
+
+```bash
+sshai local --shell bash -- <command>
+sshai local --shell pwsh --body-file check.ps1
+```
+
+`--shell` is required and accepts only `bash` or `pwsh`; executables resolve through `PATH`, and `pwsh` never falls back to Windows PowerShell 5.1. Use `--body-file -` or a private `0600` temporary file for multiline bodies that must stay out of argv; never place secret values in command bodies or expected output. Local mode is arbitrary execution on the agent machine—not SSH, a remote fallback, an authorization layer, or a security sandbox. It supports contexts, delta, JSON/result-out, artifacts, query, history, and retention, but not `--follow` or remote-only flags. Targets `local-bash` and `local-pwsh` isolate state and appear in results/logs but not `hosts`.
+
+A local timeout, start failure, or output overflow is saved as `local-error=timeout`, `local-error=start`, or `local-error=output-limit` and returns exit `96`; overflow also sets `truncated=1`. Only the direct interpreter is guaranteed to be stopped—cross-platform cleanup of descendant processes is outside the contract.
+
+## Execute remotely
 
 For a short command:
 
