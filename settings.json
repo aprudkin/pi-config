@@ -3,8 +3,8 @@
   "theme": "dark",
   "externalEditor": "/opt/homebrew/bin/code --wait",
   "defaultProvider": "openai-codex",
-  "defaultModel": "gpt-5.6-terra",
-  "defaultThinkingLevel": "low",
+  "defaultModel": "gpt-5.6-sol",
+  "defaultThinkingLevel": "medium",
   "modelThinkingLevels": {
     "openai-codex/gpt-5.6-luna": "low",
     "openai-codex/gpt-5.6-terra": "low",
