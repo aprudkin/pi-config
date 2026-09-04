@@ -14,7 +14,7 @@ It started from [amosblomqvist/pi-config](https://github.com/amosblomqvist/pi-co
 | Default model | `openai-codex/gpt-5.6-sol`, thinking `medium` |
 | Search | Exa Search API via `EXA_API_KEY` |
 | URL fetch | direct HTTP, Readability/Turndown, PDF support, Jina fallback |
-| Subagents | interactive tmux package with local `scout`, `researcher`, `architector`, and `worker` profiles |
+| Subagents | interactive tmux package with local `scout`, `researcher`, `worker`, `reviewer`, and `architector` profiles |
 | Memory | observational memory package, opt-in per session |
 | Dictation | Groq Whisper Large v3 (`ru`) with local Orca Parakeet fallback |
 | Orca | pane status, prefill, and titlebar activity extensions |
@@ -94,12 +94,13 @@ The package opens child Pi sessions in tmux panes and exposes asynchronous `suba
 |---|---|---|
 | `scout` | `openai-codex/gpt-5.6-luna`, medium | narrow read-only codebase reconnaissance |
 | `researcher` | `openai-codex/gpt-5.6-luna`, medium | sourced web research |
-| `architector` | `openai-codex/gpt-5.6-sol`, high | read-only review of important technical decisions |
 | `worker` | `openai-codex/gpt-5.6-terra`, medium | implementation and verification |
+| `reviewer` | `openai-codex/gpt-5.6-terra`, high | independent read-only review of materially risky implementations |
+| `architector` | `openai-codex/gpt-5.6-sol`, high | read-only review of important technical decisions |
 
-The `economy` and `quality` presets switch the lead session model and thinking level. They do not downgrade `architector`: required architecture reviews continue to use Sol with high thinking, and the lead session keeps its active preset while the review runs in a separate pane.
+The `economy` and `quality` presets switch the lead session model and thinking level. They do not downgrade `reviewer` or `architector`: required reviews keep their profile models and thinking levels while running in separate panes.
 
-The worker may delegate to `scout` and `researcher`. It may delegate to `architector` only when its coordinator explicitly authorizes one architecture-review child for the current task with maximum descendant depth 1 and direct-child fan-out 1. See [`extensions/interactive-subagents/README.md`](extensions/interactive-subagents/README.md).
+Use `architector` before adopting an important technical decision and `reviewer` after implementing and initially verifying a materially risky change. The reviewer has only `read`, `grep`, `find`, and `ls`, cannot delegate, and must not be the implementation agent. The worker may delegate to `scout` and `researcher`; it may delegate to `architector` only with explicit per-task authorization bounded to one child and one descendant level. The coordinator invokes `reviewer` independently after implementation. See [`extensions/interactive-subagents/README.md`](extensions/interactive-subagents/README.md).
 
 ## Observational memory
 
