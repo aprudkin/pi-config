@@ -1,0 +1,12 @@
+{
+  "economy": {
+    "provider": "openai-codex",
+    "model": "gpt-5.6-terra",
+    "thinkingLevel": "low"
+  },
+  "quality": {
+    "provider": "openai-codex",
+    "model": "gpt-5.6-sol",
+    "thinkingLevel": "medium"
+  }
+}
