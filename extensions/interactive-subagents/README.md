@@ -24,6 +24,9 @@ Global profile overrides live in `~/.pi/agent/agents/`:
 |---|---|---|
 | `scout` | `openai-codex/gpt-5.6-luna`, medium | read-only repository reconnaissance |
 | `researcher` | `openai-codex/gpt-5.6-luna`, medium | sourced web research |
+| `architector` | `openai-codex/gpt-5.6-sol`, high | read-only review of important technical decisions |
 | `worker` | `openai-codex/gpt-5.6-terra`, medium | implementation and verification |
+
+The `economy` and `quality` presets affect the lead session only. `architector` remains on Sol with high thinking under both presets, and its separate child process does not change the lead session's active preset. A worker may spawn it only with explicit per-task authorization bounded to one child and one descendant level.
 
 A real tmux smoke test confirmed pane creation, fixture reading, and automatic result delivery to the parent.

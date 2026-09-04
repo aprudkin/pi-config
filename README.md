@@ -14,7 +14,7 @@ It started from [amosblomqvist/pi-config](https://github.com/amosblomqvist/pi-co
 | Default model | `openai-codex/gpt-5.6-sol`, thinking `medium` |
 | Search | Exa Search API via `EXA_API_KEY` |
 | URL fetch | direct HTTP, Readability/Turndown, PDF support, Jina fallback |
-| Subagents | interactive tmux package with local `scout`, `researcher`, and `worker` profiles |
+| Subagents | interactive tmux package with local `scout`, `researcher`, `architector`, and `worker` profiles |
 | Memory | observational memory package, opt-in per session |
 | Dictation | Groq Whisper Large v3 (`ru`) with local Orca Parakeet fallback |
 | Orca | pane status, prefill, and titlebar activity extensions |
@@ -94,9 +94,12 @@ The package opens child Pi sessions in tmux panes and exposes asynchronous `suba
 |---|---|---|
 | `scout` | `openai-codex/gpt-5.6-luna`, medium | narrow read-only codebase reconnaissance |
 | `researcher` | `openai-codex/gpt-5.6-luna`, medium | sourced web research |
+| `architector` | `openai-codex/gpt-5.6-sol`, high | read-only review of important technical decisions |
 | `worker` | `openai-codex/gpt-5.6-terra`, medium | implementation and verification |
 
-The worker may delegate only to `scout` and `researcher`. See [`extensions/interactive-subagents/README.md`](extensions/interactive-subagents/README.md).
+The `economy` and `quality` presets switch the lead session model and thinking level. They do not downgrade `architector`: required architecture reviews continue to use Sol with high thinking, and the lead session keeps its active preset while the review runs in a separate pane.
+
+The worker may delegate to `scout` and `researcher`. It may delegate to `architector` only when its coordinator explicitly authorizes one architecture-review child for the current task with maximum descendant depth 1 and direct-child fan-out 1. See [`extensions/interactive-subagents/README.md`](extensions/interactive-subagents/README.md).
 
 ## Observational memory
 
