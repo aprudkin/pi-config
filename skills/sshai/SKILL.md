@@ -15,6 +15,9 @@ For a short command:
 sshai run <host> -- <command>
 ```
 
+Host aliases must match `[A-Za-z0-9._-]+`; path separators, whitespace, `.` and `..` are rejected so
+an alias cannot escape its local state directory.
+
 For a multi-line body, keep the body out of argv and feed it through stdin or a private temporary file created with mode `0600` and removed after use:
 
 ```bash
