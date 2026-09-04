@@ -120,6 +120,27 @@ A live test on a pre-existing long session verified observer batches, ledger ent
 
 See [`extensions/observational-memory/README.md`](extensions/observational-memory/README.md).
 
+## SSHAI execution mode
+
+Local `sshai` guidance is disabled by default and can be enabled for the current session without
+starting an agent turn:
+
+```text
+/sshai on
+/sshai status
+/sshai off
+```
+
+While enabled, Pi prefers `sshai local` for potentially noisy non-interactive local commands and
+uses stored artifacts plus `q`, `diff`, or `--delta` for targeted evidence. Direct tools remain the
+right choice for short bounded output, file operations, interactive or streaming commands, and
+unsupported workflows. This is advisory model guidance, not execution enforcement, authorization,
+or a security boundary.
+
+The state is stored on the active session branch, survives reload and resume, and is inherited by a
+fork only when enabled at the fork point. The `sshai:on` footer badge indicates that the mode is
+active. See `extensions/sshai-mode/index.ts`.
+
 ## Voice dictation
 
 `packages/pi-local-dictate/` replaces the Deepgram-based package in this setup.
@@ -151,6 +172,7 @@ See [`packages/pi-local-dictate/README.md`](packages/pi-local-dictate/README.md)
 | `extensions/orca-prefill.ts` | inject Orca prefill text into the editor |
 | `extensions/orca-titlebar-spinner.ts` | keep the Orca pane title active through agent/compaction lifecycle |
 | `extensions/prompt-snippets/` | per-message reusable instruction snippets |
+| `extensions/sshai-mode/` | opt-in session-wide guidance for context-frugal local execution |
 | `extensions/web-fetch/` | read exact URLs |
 | `extensions/web-search/` | Exa-backed search |
 
@@ -164,7 +186,7 @@ See [`packages/pi-local-dictate/README.md`](packages/pi-local-dictate/README.md)
 | `better-markdown` | evidence-preserving Markdown and README editing |
 | `pdf-reader` | PDF extraction and analysis |
 | `ru-tech-docs` | Russian technical-documentation writing and semantic-safe editing |
-| `sshai` | bounded non-interactive SSH execution through configured host aliases |
+| `sshai` | bounded local Bash/PowerShell and remote SSH execution with compact artifacts |
 | `web-debug` | browser-driven frontend debugging workflow |
 | `youtube-transcript` | YouTube title and transcript extraction |
 
