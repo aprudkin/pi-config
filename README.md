@@ -26,6 +26,7 @@ It started from [amosblomqvist/pi-config](https://github.com/amosblomqvist/pi-co
 - `pi-interactive-subagents` pinned to commit `c3e8b53c0754ae5ccc19fdab5a7481ec039bc2f7`;
 - `pi-observational-memory` pinned to commit `78a1efcfdd46332253fb289724f05b26dfc7769e`;
 - local package `./packages/pi-local-dictate`;
+- local package `~/.local/share/sshai`, installed from the `sshai` source tree;
 - npm package `pi-footer`.
 
 Pi reconciles the pinned git packages. Restore the local dictation dependencies separately:
@@ -139,7 +140,8 @@ or a security boundary.
 
 The state is stored on the active session branch, survives reload and resume, and is inherited by a
 fork only when enabled at the fork point. The `sshai:on` footer badge indicates that the mode is
-active. See `extensions/sshai-mode/index.ts`.
+active. Both the extension and skill are provided by the external package at
+`~/.local/share/sshai`; their source lives in the `sshai` repository.
 
 ## Voice dictation
 
@@ -172,7 +174,6 @@ See [`packages/pi-local-dictate/README.md`](packages/pi-local-dictate/README.md)
 | `extensions/orca-prefill.ts` | inject Orca prefill text into the editor |
 | `extensions/orca-titlebar-spinner.ts` | keep the Orca pane title active through agent/compaction lifecycle |
 | `extensions/prompt-snippets/` | per-message reusable instruction snippets |
-| `extensions/sshai-mode/` | opt-in session-wide guidance for context-frugal local execution |
 | `extensions/web-fetch/` | read exact URLs |
 | `extensions/web-search/` | Exa-backed search |
 
@@ -186,7 +187,7 @@ See [`packages/pi-local-dictate/README.md`](packages/pi-local-dictate/README.md)
 | `better-markdown` | evidence-preserving Markdown and README editing |
 | `pdf-reader` | PDF extraction and analysis |
 | `ru-tech-docs` | Russian technical-documentation writing and semantic-safe editing |
-| `sshai` | bounded local Bash/PowerShell and remote SSH execution with compact artifacts |
+| `sshai` (external package) | bounded local Bash/PowerShell and remote SSH execution with compact artifacts |
 | `web-debug` | browser-driven frontend debugging workflow |
 | `youtube-transcript` | YouTube title and transcript extraction |
 
@@ -211,7 +212,9 @@ System dependencies used by this setup:
 brew install tmux sox yt-dlp ffmpeg
 ```
 
-The `sshai` skill additionally requires the external `sshai` binary on `PATH`, system `ssh`/`scp`, and configured SSH host aliases. Verify the CLI contract with `sshai help`; it does not implement `--version`.
+The external `sshai` package provides its skill and session-mode extension. It requires the `sshai`
+binary on `PATH`, system `ssh`/`scp`, and configured SSH host aliases. Verify the CLI contract with
+`sshai help`; it does not implement `--version`.
 
 The PDF reader uses its own Python virtual environment:
 
