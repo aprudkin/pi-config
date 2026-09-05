@@ -26,7 +26,6 @@ It started from [amosblomqvist/pi-config](https://github.com/amosblomqvist/pi-co
 - `pi-interactive-subagents` pinned to commit `c3e8b53c0754ae5ccc19fdab5a7481ec039bc2f7`;
 - `pi-observational-memory` pinned to commit `78a1efcfdd46332253fb289724f05b26dfc7769e`;
 - local package `./packages/pi-local-dictate`;
-- local package `~/.local/share/sshai`, installed from the `sshai` source tree;
 - npm package `pi-footer`.
 
 Pi reconciles the pinned git packages. Restore the local dictation dependencies separately:
@@ -121,28 +120,6 @@ A live test on a pre-existing long session verified observer batches, ledger ent
 
 See [`extensions/observational-memory/README.md`](extensions/observational-memory/README.md).
 
-## SSHAI execution mode
-
-Local `sshai` guidance is disabled by default and can be enabled for the current session without
-starting an agent turn:
-
-```text
-/sshai on
-/sshai status
-/sshai off
-```
-
-While enabled, Pi prefers `sshai local` for potentially noisy non-interactive local commands and
-uses stored artifacts plus `q`, `diff`, or `--delta` for targeted evidence. Direct tools remain the
-right choice for short bounded output, file operations, interactive or streaming commands, and
-unsupported workflows. This is advisory model guidance, not execution enforcement, authorization,
-or a security boundary.
-
-The state is stored on the active session branch, survives reload and resume, and is inherited by a
-fork only when enabled at the fork point. The `sshai:on` footer badge indicates that the mode is
-active. Both the extension and skill are provided by the external package at
-`~/.local/share/sshai`; their source lives in the `sshai` repository.
-
 ## Voice dictation
 
 `packages/pi-local-dictate/` replaces the Deepgram-based package in this setup.
@@ -187,7 +164,7 @@ See [`packages/pi-local-dictate/README.md`](packages/pi-local-dictate/README.md)
 | `better-markdown` | evidence-preserving Markdown and README editing |
 | `pdf-reader` | PDF extraction and analysis |
 | `ru-tech-docs` | Russian technical-documentation writing and semantic-safe editing |
-| `sshai` (external package) | bounded local Bash/PowerShell and remote SSH execution with compact artifacts |
+| `sshai` | bounded local Bash/PowerShell and remote SSH execution with compact artifacts |
 | `web-debug` | browser-driven frontend debugging workflow |
 | `youtube-transcript` | YouTube title and transcript extraction |
 
@@ -212,9 +189,7 @@ System dependencies used by this setup:
 brew install tmux sox yt-dlp ffmpeg
 ```
 
-The external `sshai` package provides its skill and session-mode extension. It requires the `sshai`
-binary on `PATH`, system `ssh`/`scp`, and configured SSH host aliases. Verify the CLI contract with
-`sshai help`; it does not implement `--version`.
+The `sshai` skill additionally requires the external `sshai` binary on `PATH`, system `ssh`/`scp`, and configured SSH host aliases. Verify the CLI contract with `sshai help`; it does not implement `--version`.
 
 The PDF reader uses its own Python virtual environment:
 
